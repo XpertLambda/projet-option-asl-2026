@@ -1,6 +1,6 @@
 # Projet d'option ASL-IA 2026-2027
 
-Groupe : [Prénom NOM 1], [Prénom NOM 2], [Prénom NOM 3]
+Groupe : SAAD Ahmad, EL JIBBAWE Amer, TERRO Ali
 Sujet : en attente d'attribution
 
 ## Objectif
