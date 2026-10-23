@@ -1,0 +1,15 @@
+<!-- Réseau libvirt du projet : NAT 192.168.100.0/24, adresses fixes par réservation DHCP.
+     Source unique des adresses et des MAC (lue par infra/lib.sh). -->
+<network>
+  <name>dr-net</name>
+  <forward mode='nat'/>
+  <bridge name='virbr-dr' stp='on' delay='0'/>
+  <ip address='192.168.100.1' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.100.100' end='192.168.100.200'/>
+      <host mac='52:54:00:64:00:10' name='cluster-a' ip='192.168.100.10'/>
+      <host mac='52:54:00:64:00:20' name='cluster-b' ip='192.168.100.20'/>
+      <host mac='52:54:00:64:00:30' name='backup' ip='192.168.100.30'/>
+    </dhcp>
+  </ip>
+</network>

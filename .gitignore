@@ -9,3 +9,5 @@ credentials*
 .vagrant/
 __pycache__/
 .venv/
+*.env
+id_ed25519*

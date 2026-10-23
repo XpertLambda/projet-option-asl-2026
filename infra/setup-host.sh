@@ -5,7 +5,9 @@
 # Le projet utilise un seul compte partagé, `projet`, avec la clé SSH de chaque membre.
 set -euo pipefail
 
-VELERO_VERSION="${VELERO_VERSION:-v1.18.1}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Version de Velero : lue dans versions.yaml (surchargeable avec VELERO_VERSION=...)
+VELERO_VERSION="${VELERO_VERSION:-$(awk -F': *' '$1=="velero_version" {print $2; exit}' "$SCRIPT_DIR/../versions.yaml")}"
 IMAGES_DIR="/var/lib/libvirt/images"
 UBUNTU_IMG_URL="https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
 
