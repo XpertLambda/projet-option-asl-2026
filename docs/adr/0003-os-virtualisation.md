@@ -33,7 +33,8 @@ puis un Kubernetes léger. Tout doit être reconstructible par script.
 | kind / k3d | Très rapide | Clusters dans des conteneurs : la destruction d'un « cluster » est moins réaliste |
 
 ## Décision
-- Hôte : **Ubuntu 24.04 LTS** (Server, ou Desktop si la RAM le permet).
+- Hôte : **Ubuntu 24.04 LTS** (Desktop ou Server ; avec 15 Go de RAM, Server laisse
+  environ 1,5 Go de plus aux VM).
 - Virtualisation : **KVM/libvirt**, VM créées à partir de l'image cloud Ubuntu 24.04
   et configurées par **cloud-init**.
 - Kubernetes : **k3s**, un nœud par cluster.

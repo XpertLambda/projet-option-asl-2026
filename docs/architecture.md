@@ -94,11 +94,24 @@ services 10.43.0.0/16) ; les deux clusters étant séparés, il n'y a pas de con
 |----|------|-----|--------|
 | cluster-a | 2 | 4 Go | 30 Go |
 | cluster-b | 2 | 4 Go | 30 Go |
-| backup | 1 | 2 Go | 20 Go système + 50 Go données |
-| **Total** | **5** | **10 Go** | **130 Go** |
+| backup | 1 | 2 Go | 20 Go système + 100 Go données |
+| **Total** | **5** | **10 Go** | **180 Go** |
 
-Hôte : non encore spécifié. Un hôte de 16 Go de RAM
-suffit ; la marge restante sert à l'hôte et aux mesures.
+Hôte : **4 threads CPU, 15 Go de RAM, 428 Go de disque**.
+
+- **RAM** : les VM utilisent 10 Go ; il reste environ 5 Go pour l'hôte (Ubuntu Desktop en
+  consomme environ 2 Go). La marge est faible mais suffisante ; elle est surveillée
+  (`free -h`, pas de swap pendant les mesures).
+- **Disque** : largement suffisant. Le disque de données de `backup` est porté à 100 Go
+  pour conserver davantage de sauvegardes pendant les mesures du J4.
+
+Les 5 vCPU des VM dépassent les 4 threads de l'hôte (surallocation). C'est acceptable
+ici car les VM ne sont presque jamais chargées en même temps : en fonctionnement normal
+seul `cluster-a` travaille (`cluster-b` attend), et pendant la reprise `cluster-a` est
+détruit, ce qui libère ses vCPU pour `cluster-b`. Pour des mesures comparables, aucune
+autre charge ne doit tourner sur l'hôte pendant les tests (consigné dans le protocole J4).
+Repli si le CPU sature : `cluster-a` et `cluster-b` à 1 vCPU chacun (minimum de k3s).
+Repli si la RAM sature (swap) : `cluster-b` à 3 Go et `backup` à 1,5 Go.
 
 ## 6. Scénario de sinistre et de reprise
 

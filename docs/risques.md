@@ -5,7 +5,7 @@
 | ID | Risque | P | I | Crit. | Mitigation | Plan B | Responsable |
 |----|--------|---|---|-------|------------|--------|-------------|
 | R1 | Virtualisation (VT-x/AMD-V) désactivée ou absente sur l'hôte | 1 | 3 | 3 | Vérifier le BIOS et `kvm-ok` dès l'installation | Autre machine de la salle | Ahmad |
-| R2 | RAM de l'hôte insuffisante pour 3 VM + mesures | 2 | 2 | 4 | Dimensionnement serré (10 Go au total), Ubuntu Server si 16 Go | Réduire `backup` à 1 Go ou MinIO sur l'hôte | Ahmad |
+| R2 | Hôte limité (4 threads CPU, 15 Go de RAM) : saturation CPU ou swap pendant les sauvegardes, mesures faussées | 2 | 2 | 4 | 5 vCPU et 10 Go pour les VM (surallocation CPU maîtrisée, A et B rarement actifs ensemble), environ 5 Go de marge RAM surveillée (`free -h`), aucune autre charge pendant les mesures, `kubectl top` / `vmstat` relevés à chaque mesure | `cluster-a` et `cluster-b` à 1 vCPU, `cluster-b` à 3 Go, `backup` à 1,5 Go, ou MinIO sur l'hôte | Ahmad |
 | R3 | MinIO CE non maintenu, binaire ou image indisponible | 2 | 2 | 4 | Figer et archiver le dernier binaire officiel dès J2 | Garage ou SeaweedFS (compatibles S3) | Amer |
 | R4 | Restauration Velero incomplète (PVC, ordre des ressources, StorageClass) | 2 | 3 | 6 | Test de restauration dès J2 sur une appli simple, même StorageClass sur A et B | `pg_dump` + manifestes Git | Amer |
 | R5 | Base PostgreSQL incohérente après restauration | 2 | 3 | 6 | Hook Velero (`pg_backup_start/stop`), vérification par requêtes | Sauvegarde logique `pg_dump` | Ali |

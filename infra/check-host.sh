@@ -18,9 +18,9 @@ done
 ram=$(awk '/MemTotal/{printf "%d", $2/1024/1024}' /proc/meminfo)
 disk=$(df -BG --output=avail /var/lib/libvirt/images | tail -1 | tr -dc '0-9')
 cpu=$(nproc)
-(( ram >= 14 )) && ok "RAM : ${ram} Go" || ko "RAM : ${ram} Go (16 Go recommandés)"
-(( disk >= 130 )) && ok "Disque libre : ${disk} Go" || ko "Disque libre : ${disk} Go (130 Go nécessaires)"
-(( cpu >= 6 )) && ok "CPU : ${cpu} threads" || ko "CPU : ${cpu} threads (6 recommandés)"
+(( ram >= 14 )) && ok "RAM : ${ram} Go" || ko "RAM : ${ram} Go (14 Go minimum : 10 Go pour les VM + hôte)"
+(( disk >= 180 )) && ok "Disque libre : ${disk} Go" || ko "Disque libre : ${disk} Go (180 Go nécessaires)"
+(( cpu >= 4 )) && ok "CPU : ${cpu} threads" || ko "CPU : ${cpu} threads (4 minimum)"
 
 echo
 [[ $FAIL -eq 0 ]] && echo "Hôte prêt." || echo "Hôte pas encore prêt : corriger les lignes [KO]."
