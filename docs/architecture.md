@@ -51,7 +51,7 @@ cluster de reprise.
 
 | Composant | Rôle | Choix | ADR |
 |-----------|------|-------|-----|
-| Système hôte | Exécuter les VM | Ubuntu Server 24.04 LTS | [0003](adr/0003-os-virtualisation.md) |
+| Système hôte | Exécuter les VM | Ubuntu 24.04 LTS (variante Desktop installée) | [0003](adr/0003-os-virtualisation.md) |
 | Virtualisation | Créer et détruire les VM par script | KVM/libvirt + cloud-init | [0003](adr/0003-os-virtualisation.md) |
 | Kubernetes | Orchestrer l'application | k3s, un nœud par cluster | [0003](adr/0003-os-virtualisation.md) |
 | Application | Générer des données à protéger | PostgreSQL + écrivain horodaté | - |
@@ -73,6 +73,15 @@ cluster de reprise.
   écraser les sauvegardes de A pendant une reprise.
 - Volumes copiés par le `node-agent` (Kopia), avec un hook PostgreSQL pour obtenir
   une copie cohérente (voir ADR 0004).
+- Le dépôt Kopia est chiffré par un mot de passe : il est généré une fois, stocké hors
+  Git, et injecté à l'identique dans les deux clusters (sinon B ne peut pas ouvrir le
+  dépôt créé par A).
+
+### 3.3 k3s
+Installé avec `--disable traefik --disable servicelb` (ni ingress ni LoadBalancer
+nécessaires : économie de RAM et de CPU sur des nœuds de 4 Go). Le stockage par défaut
+(`local-path`) et `metrics-server` (pour `kubectl top`) sont conservés. Toutes les
+versions sont figées dans `versions.yaml`.
 
 ## 4. Réseau et adressage
 

@@ -30,6 +30,19 @@ Pour la cohérence de PostgreSQL, un **hook Velero** est ajouté sur le pod de b
 Sans hook, la copie reste restaurable (PostgreSQL rejoue ses WAL au démarrage, comme
 après une coupure de courant), mais le hook rend la cohérence explicite.
 
+**Point à valider au J3 (relecture du 23/10).** `pg_backup_start()` ouvre une sauvegarde
+« non exclusive » qui prend fin dès que la session SQL qui l'a ouverte se termine. Or les
+hooks Velero `pre` et `post` sont deux `exec` séparés : un `psql` lancé par le hook `pre`
+se termine avant la copie, et la sauvegarde PostgreSQL est alors déjà close. Deux
+réalisations possibles, à départager par un test de restauration :
+- hook `pre` qui lance en arrière-plan une session `psql` maintenue ouverte
+  (`pg_backup_start`, attente d'un fichier témoin, `pg_backup_stop`), hook `post` qui
+  crée le fichier témoin ;
+- hook `pre` limité à `CHECKPOINT` (réduit le volume de WAL à rejouer), la cohérence
+  reposant sur la reprise après incident de PostgreSQL ; vérifiée par la restauration
+  (`verify.sh`) et comparée à `pg_dump` (plan B).
+Le choix retenu sera consigné dans le journal et dans le rapport.
+
 ## Alternatives rejetées
 - **Snapshots CSI** : demande d'installer Longhorn, ce qui ajoute un composant lourd
   sans rapport direct avec le sujet. Envisageable en extension J4 pour comparer.
