@@ -1,0 +1,30 @@
+# 2026-10-23 18:09:28
+# commande : make -C '/home/user/projet_option/src' --no-print-directory status
+
+== VM
+ Id   Name        State
+---------------------------
+ 1    backup      running
+ 6    cluster-a   running
+ 7    cluster-b   running
+
+== Adresses
+cluster-a 192.168.100.10/24
+cluster-b 192.168.100.20/24
+backup 192.168.100.30/24
+== cluster-a
+   NAME        STATUS   ROLES           AGE     VERSION
+   cluster-a   Ready    control-plane   2m29s   v1.35.9+k3s1
+   NAME      PHASE       LAST VALIDATED   AGE   DEFAULT
+   default   Available   6s               98s   true
+== cluster-b
+   NAME        STATUS   ROLES           AGE    VERSION
+   cluster-b   Ready    control-plane   2m6s   v1.35.9+k3s1
+   NAME      PHASE       LAST VALIDATED   AGE   DEFAULT
+   default   Available   34s              64s   true
+== Application (cluster-a)
+   NAME                      READY   STATUS    RESTARTS   AGE
+   postgres-0                1/1     Running   0          2m1s
+   writer-6b659896f4-ggw4w   1/1     Running   0          2m
+== MinIO
+   health: 200

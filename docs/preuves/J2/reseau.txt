@@ -1,0 +1,29 @@
+# 2026-10-23 18:09:31
+# commande : virsh net-dumpxml dr-net; virsh net-dhcp-leases dr-net
+
+<network connections='3'>
+  <name>dr-net</name>
+  <uuid>531dd691-b0f1-4b84-a229-0954470451ee</uuid>
+  <forward mode='nat'>
+    <nat>
+      <port start='1024' end='65535'/>
+    </nat>
+  </forward>
+  <bridge name='virbr-dr' stp='on' delay='0'/>
+  <mac address='52:54:00:52:7d:20'/>
+  <ip address='192.168.100.1' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.100.100' end='192.168.100.200'/>
+      <host mac='52:54:00:64:00:10' name='cluster-a' ip='192.168.100.10'/>
+      <host mac='52:54:00:64:00:20' name='cluster-b' ip='192.168.100.20'/>
+      <host mac='52:54:00:64:00:30' name='backup' ip='192.168.100.30'/>
+    </dhcp>
+  </ip>
+</network>
+
+ Expiry Time           MAC address         Protocol   IP address          Hostname    Client ID or DUID
+------------------------------------------------------------------------------------------------------------------------------------------------
+ 2026-10-23 19:03:43   52:54:00:64:00:10   ipv4       192.168.100.10/24   cluster-a   ff:56:50:4d:98:00:02:00:00:ab:11:dd:99:25:12:83:c9:f1:b1
+ 2026-10-23 19:05:12   52:54:00:64:00:20   ipv4       192.168.100.20/24   cluster-b   ff:56:50:4d:98:00:02:00:00:ab:11:ed:04:b2:03:1a:81:7c:e9
+ 2026-10-23 19:07:22   52:54:00:64:00:30   ipv4       192.168.100.30/24   backup      ff:56:50:4d:98:00:02:00:00:ab:11:cb:55:fd:f8:00:fc:64:b5
+

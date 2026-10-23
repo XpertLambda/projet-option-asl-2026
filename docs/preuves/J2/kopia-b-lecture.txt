@@ -1,0 +1,4 @@
+# 2026-10-23 18:11:36
+# commande : kubectl --kubeconfig '/home/user/.kube/cluster-b.yaml' -n velero get backupstoragelocation default -o jsonpath='{.spec.accessMode}{"\n"}'
+
+ReadOnly

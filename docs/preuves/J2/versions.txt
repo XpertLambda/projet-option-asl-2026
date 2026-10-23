@@ -1,0 +1,29 @@
+# 2026-10-23 18:09:28
+# commande : cat '/home/user/projet_option/src/versions.yaml'; echo; velero version --client-only; kubectl version --client | head -1
+
+# Versions figées de toute la plateforme (une clé par ligne : "cle: valeur").
+# Les scripts lisent ce fichier via infra/lib.sh (fonction ver). Ne rien figer ailleurs.
+
+# Image de base des VM (Ubuntu 24.04 cloud image, empreinte de noble-server-cloudimg-amd64.img)
+ubuntu_image_sha256: 04e8f2461a16a44e78a370284471f29616cdd9baf1893df25807b71f985b6c94
+
+# Kubernetes (k3s) : ligne 1.35, la plus récente testée par Velero 1.18
+k3s_version: v1.35.9+k3s1
+
+# Sauvegarde (CLI de l'hôte identique au serveur)
+velero_version: v1.18.1
+velero_plugin_aws_version: v1.14.4
+
+# Stockage objet : derniers binaires officiels (releases GitHub, dl.min.io ne sert plus rien)
+minio_release: RELEASE.2025-09-07T16-13-09Z
+minio_sha256: 7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f
+mc_release: RELEASE.2025-08-13T08-35-41Z
+mc_sha256: 01f866e9c5f9b87c2b09116fa5d7c06695b106242d829a8bb32990c00312e891
+
+# Application
+postgres_version: "17.11"
+
+Client:
+	Version: v1.18.1
+	Git commit: 26ef8fa7df68dfa9ab8aa4669b8ac47340b0c510
+Client Version: v1.35.9

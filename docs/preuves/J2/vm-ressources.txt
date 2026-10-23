@@ -1,0 +1,34 @@
+# 2026-10-23 18:09:29
+# commande : virsh list --all; for v in cluster-a cluster-b backup; do virsh dominfo $v | grep -E 'Name|CPU\(s\)|Max memory'; done; echo; free -h; echo; vmstat 1 3; echo; echo 'swap utilisé :'; swapon --show; grep -E 'SwapTotal|SwapFree' /proc/meminfo
+
+ Id   Name        State
+---------------------------
+ 1    backup      running
+ 6    cluster-a   running
+ 7    cluster-b   running
+
+Name:           cluster-a
+CPU(s):         2
+Max memory:     4194304 KiB
+Name:           cluster-b
+CPU(s):         2
+Max memory:     4194304 KiB
+Name:           backup
+CPU(s):         1
+Max memory:     2097152 KiB
+
+               total        used        free      shared  buff/cache   available
+Mem:            15Gi        10Gi       222Mi       352Mi       5.9Gi       5.5Gi
+Swap:          4.0Gi       488Mi       3.5Gi
+
+procs -----------memory---------- ---swap-- -----io---- -system-- -------cpu-------
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st gu
+ 0  0 499968 228272  11068 6209180    0   93   572  3530 1646    4  4  2 89  0  0  4
+ 2  0 499968 218472  11076 6210004    0    0   311   384 7756 9539  8  8 67  1  0 17
+ 1  0 499968 221812  11088 6210164    0    0     0   528 5897 7025  8  6 69  0  0 16
+
+swap utilisé :
+NAME      TYPE SIZE   USED PRIO
+/swap.img file   4G 488.3M   -2
+SwapTotal:       4194300 kB
+SwapFree:        3694332 kB

@@ -40,6 +40,73 @@ Détails : [docs/architecture.md](docs/architecture.md)
 | J5 Reproductibilité | 05/02/2027 | `J5` |
 | Rendu final | 12/02/2027 | `final` |
 
-## Reconstruction
-Procédure complète à partir du jalon J2 (`make up`, `make backup`, `make disaster`,
-`make restore`, `make demo`).
+## Reconstruction de A à Z
+
+### 0. Étapes manuelles (une seule fois, sur la machine physique)
+| Étape | Détail |
+|-------|--------|
+| BIOS | Activer VT-x / AMD-V |
+| Système | Installer Ubuntu 24.04 LTS, compte `projet`, IP fixe ou réservation DHCP |
+| Accès | `ssh-copy-id projet@<IP_MACHINE>` depuis le PC de chaque membre |
+| Cloner | `mkdir -p ~/projet_option && cd ~/projet_option && git clone <url du dépôt> src` |
+
+### 1. Préparer l'hôte (sudo requis, une seule fois)
+```bash
+cd ~/projet_option/src
+sudo ./infra/setup-host.sh projet     # KVM/libvirt, kubectl, helm, velero, image Ubuntu...
+# se déconnecter puis se reconnecter (groupes libvirt et kvm), puis :
+./infra/check-host.sh                 # toutes les lignes doivent être [OK]
+```
+
+### 2. Construire la plateforme
+```bash
+make up        # environ 10 minutes depuis zéro, quelques dizaines de secondes si tout existe
+make status    # VM, nœuds, emplacements de sauvegarde, pods, MinIO
+make smoke     # test de fumée : sauvegarde sur A, visible depuis B
+```
+`make up` enchaîne, chaque étape est idempotente et peut être relancée seule :
+
+| Cible | Script | Effet |
+|-------|--------|-------|
+| `check` | `infra/check-host.sh` | L'hôte est prêt (lecture seule) |
+| `network` | `infra/create-storage.sh`, `infra/create-network.sh` | Pools libvirt et réseau `dr-net` (192.168.100.0/24, réservations DHCP) |
+| `vms` | `infra/create-vm.sh` | VM `backup`, `cluster-a`, `cluster-b` (image Ubuntu + cloud-init) |
+| `minio` | `infra/install-minio.sh` | MinIO figé sur `backup`, bucket `velero` versionné, utilisateur limité au bucket |
+| `k3s` | `infra/install-k3s.sh` | k3s figé sur A et B, kubeconfig dans `~/.kube/` |
+| `app` | `k8s/app/deploy.sh` | PostgreSQL + écrivain (1 ligne par seconde) sur A |
+| `velero` | `k8s/velero/install-velero.sh` | Velero + Kopia sur A (lecture/écriture) et B (lecture seule) |
+
+### 3. Détruire
+```bash
+make destroy                                   # cluster-a et cluster-b ; la VM backup (les sauvegardes) reste
+make destroy-all CONFIRM_DESTROY_BACKUP=yes    # tout, y compris backup et le réseau (action volontaire)
+```
+
+## Où sont les secrets (jamais dans Git)
+| Fichier | Contenu |
+|---------|---------|
+| `~/.config/projet/minio.env` | Identifiants administrateur MinIO |
+| `~/.config/projet/velero-minio.env` | Identifiants de l'utilisateur Velero (limité au bucket `velero`) |
+| `~/.config/projet/velero-repo.env` | Mot de passe du dépôt Kopia, identique sur A et B |
+| `~/.config/projet/postgres.env` | Mot de passe PostgreSQL |
+| `~/.config/projet/ssh/id_ed25519` | Clé SSH des VM (utilisateur `ubuntu`) |
+| `~/.kube/cluster-a.yaml`, `cluster-b.yaml` | Kubeconfig des clusters |
+| `~/.cache/projet/` | Binaires MinIO et mc archivés (leur source amont a disparu) |
+
+Ces fichiers sont générés au premier `make up`. Perdre `~/.config/projet/` après une
+sauvegarde rend celle-ci illisible : le copier hors de l'hôte avec les sauvegardes.
+
+## Versions
+Toutes les versions sont figées dans [versions.yaml](versions.yaml) : image Ubuntu (empreinte),
+k3s, Velero et plugin AWS, MinIO et mc (empreintes), PostgreSQL.
+
+## Points manuels et pièges connus
+- Le mot de passe `sudo` n'est demandé que pour `infra/setup-host.sh` (installation des paquets).
+- Si un `make` échoue, le relancer : chaque étape reprend là où elle s'est arrêtée.
+- Docker Hub limite les téléchargements anonymes (100 par 6 h et par IP) : une dizaine d'images
+  par reconstruction, donc ne pas enchaîner plus de quelques reconstructions complètes d'affilée.
+- MinIO : `dl.min.io` ne sert plus de binaire, la source est la release GitHub (voir ADR 0002).
+- Les cibles `disaster`, `restore` et `demo` arrivent au jalon J3.
+
+## Preuves
+`docs/preuves/<jalon>/` : sorties de commandes et durées de chaque jalon.

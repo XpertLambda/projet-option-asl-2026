@@ -1,0 +1,95 @@
+Vérification de l'hôte
+  [OK]   Virtualisation matérielle (kvm-ok)
+  [OK]   libvirt accessible sans sudo
+  [OK]   Serveur SSH actif
+  [OK]   Mise en veille désactivée
+  [OK]   Heure synchronisée (NTP)
+  [OK]   Commande git
+  [OK]   Commande make
+  [OK]   Commande kubectl
+  [OK]   Commande helm
+  [OK]   Commande velero
+  [OK]   Commande virt-install
+  [OK]   Commande cloud-localds
+  [OK]   Image cloud Ubuntu 24.04 présente
+  [OK]   RAM : 15 Go
+  [OK]   Disque libre : 415 Go
+  [OK]   CPU : 4 threads
+
+Hôte prêt.
+== Pools de stockage libvirt
+    Name      State    Autostart
+   -------------------------------
+    dr-base   active   yes
+    dr-vms    active   yes
+   
+== Réseau dr-net (192.168.100.0/24)
+   réseau déjà défini avec les bonnes réservations
+   Name:           dr-net
+   UUID:           531dd691-b0f1-4b84-a229-0954470451ee
+   Active:         yes
+   Persistent:     yes
+   Autostart:      yes
+   Bridge:         virbr-dr
+   
+== VM backup (192.168.100.30, 1 vCPU, 2048 Mo, disque 20 Go + données 100 Go)
+   backup prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.30
+== VM cluster-a (192.168.100.10, 2 vCPU, 4096 Mo, disque 30 Go)
+   cluster-a prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.10
+== VM cluster-b (192.168.100.20, 2 vCPU, 4096 Mo, disque 30 Go)
+   cluster-b prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.20
+== Identifiants MinIO (hors Git)
+   identifiants déjà présents
+== Binaires MinIO et mc (téléchargement vérifié, copie archivée dans /home/user/.cache/projet)
+   minio.RELEASE.2025-09-07T16-13-09Z déjà en cache (empreinte OK)
+   mc.RELEASE.2025-08-13T08-35-41Z déjà en cache (empreinte OK)
+== Installation sur la VM backup
+Bucket created successfully `local/velero`.
+local/velero versioning is enabled
+Created policy `velero-bucket` successfully.
+Added user `velero` successfully.
+Attached Policies: [velero-bucket]
+To User: velero
+MinIO prêt ; versionnage : local/velero versioning is enabled
+== Contrôle depuis l'hôte avec l'utilisateur Velero (bucket accessible, hors bucket refusé)
+   API S3 joignable sur http://192.168.100.30:9000
+   utilisateur velero : accès au bucket velero OK
+   utilisateur velero : création d un autre bucket refusée (OK)
+== k3s v1.35.9+k3s1 sur cluster-a (192.168.100.10)
+   k3s v1.35.9+k3s1 déjà installé
+   kubeconfig : /home/user/.kube/cluster-a.yaml
+   NAME        STATUS   ROLES           AGE     VERSION        INTERNAL-IP      EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+   cluster-a   Ready    control-plane   4m57s   v1.35.9+k3s1   192.168.100.10   <none>        Ubuntu 24.04.5 LTS   6.8.0-147-generic   containerd://2.2.7-k3s1
+== k3s v1.35.9+k3s1 sur cluster-b (192.168.100.20)
+   k3s v1.35.9+k3s1 déjà installé
+   kubeconfig : /home/user/.kube/cluster-b.yaml
+   NAME        STATUS   ROLES           AGE     VERSION        INTERNAL-IP      EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+   cluster-b   Ready    control-plane   4m42s   v1.35.9+k3s1   192.168.100.20   <none>        Ubuntu 24.04.5 LTS   6.8.0-147-generic   containerd://2.2.7-k3s1
+== Application sur cluster-a (PostgreSQL 17.11)
+   partitioned roll out complete: 1 new pods have been updated...
+   deployment "writer" successfully rolled out
+   NAME                          READY   STATUS    RESTARTS   AGE
+   pod/postgres-0                1/1     Running   0          4m6s
+   pod/writer-6b659896f4-zlgjk   1/1     Running   0          4m5s
+   
+   NAME                                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+   persistentvolumeclaim/data-postgres-0   Bound    pvc-56824b5c-9ada-4f89-9f76-51e68f78e0d9   5Gi        RWO            local-path     <unset>                 4m6s
+== Velero v1.18.1 sur cluster-a (emplacement de sauvegarde : rw)
+   Velero déjà installé
+   NAME      PROVIDER   BUCKET/PREFIX   PHASE       LAST VALIDATED                   ACCESS MODE   DEFAULT
+   default   aws        velero          Available   2026-10-23 17:46:27 +0200 CEST   ReadWrite     true
+   NAME                      READY   STATUS    RESTARTS   AGE
+   node-agent-4fnfq          1/1     Running   0          2m52s
+   velero-55445ff89c-tpp5b   1/1     Running   0          2m52s
+== Velero v1.18.1 sur cluster-b (emplacement de sauvegarde : ro)
+   Velero déjà installé
+   NAME      PROVIDER   BUCKET/PREFIX   PHASE       LAST VALIDATED                   ACCESS MODE   DEFAULT
+   default   aws        velero          Available   2026-10-23 17:46:01 +0200 CEST   ReadOnly      true
+   NAME                      READY   STATUS    RESTARTS   AGE
+   node-agent-lnznc          1/1     Running   0          2m18s
+   velero-55445ff89c-rcvtl   1/1     Running   0          2m18s
+== make up terminé en 26 s
+
+real	0m26.012s
+user	0m11.830s
+sys	0m2.995s

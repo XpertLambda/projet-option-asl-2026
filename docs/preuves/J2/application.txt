@@ -1,0 +1,10 @@
+# 2026-10-23 18:09:32
+# commande : '/home/user/projet_option/src/scripts/verify.sh' cluster-a
+
+== [18:09:32] Vérification de l'application sur cluster-a
+   postgres-0                1/1   Running   0     2m4s
+   writer-6b659896f4-ggw4w   1/1   Running   0     2m3s
+   lignes : 101, dernier id : 101
+   dernier ts : 2026-10-23T16:09:32.780553Z (il y a 0.949962s)
+   écarts de plus de 5 s entre deux lignes consécutives : 0
+VERIFY cluster=cluster-a count=101 max_id=101 max_ts=2026-10-23T16:09:32.780553Z gaps_gt5s=0

@@ -1,0 +1,8 @@
+# 2026-10-23 18:09:34
+# commande : velero --kubeconfig '/home/user/.kube/cluster-b.yaml' backup-location get; kubectl --kubeconfig '/home/user/.kube/cluster-b.yaml' -n velero get pods; velero --kubeconfig '/home/user/.kube/cluster-b.yaml' backup get
+
+NAME      PROVIDER   BUCKET/PREFIX   PHASE       LAST VALIDATED                   ACCESS MODE   DEFAULT
+default   aws        velero          Available   2026-10-23 18:08:55 +0200 CEST   ReadOnly      true
+NAME                      READY   STATUS    RESTARTS   AGE
+node-agent-7c4nb          1/1     Running   0          69s
+velero-55445ff89c-g228j   1/1     Running   0          69s

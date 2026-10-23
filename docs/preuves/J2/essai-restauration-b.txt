@@ -1,0 +1,63 @@
+# 2026-10-23 18:12:01 essai préliminaire de restauration sur cluster-b (hors protocole J3)
+Restore request "essai-j2" submitted successfully.
+Waiting for restore to complete. You may safely press ctrl-c to stop waiting - your restore will continue in the background.
+..................
+Restore completed with status: Completed. You may check for more information using the commands `velero restore describe essai-j2` and `velero restore logs essai-j2`.
+durée restauration Velero : 19 s
+NAME                          READY   STATUS            RESTARTS   AGE
+pod/postgres-0                0/1     PodInitializing   0          19s
+pod/writer-6b659896f4-ggw4w   1/1     Running           0          19s
+
+NAME                                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+persistentvolumeclaim/data-postgres-0   Bound    pvc-5acc05b6-9736-450a-90fb-a64d529ee3a4   5Gi        RWO            local-path     <unset>                 19s
+Phase:                       [32mCompleted[0m
+Restore PVs:  auto
+
+kopia Restores:
+  Completed:
+    app/postgres-0: data (size: 48045768)
+
+CSI Snapshot Restores: <none included>
+
+Existing Resource Policy:   <none>
+ItemOperationTimeout:       4h0m0s
+
+Preserve Service NodePorts:  auto
+
+Uploader config:
+
+
+HooksAttempted:   0
+HooksFailed:      0
+
+Resource List:
+  apps/v1/ControllerRevision:
+    - app/postgres-566c7cc5d8(created)
+  apps/v1/Deployment:
+    - app/writer(created)
+  apps/v1/ReplicaSet:
+    - app/writer-6b659896f4(created)
+  apps/v1/StatefulSet:
+    - app/postgres(created)
+  discovery.k8s.io/v1/EndpointSlice:
+
+# 2026-10-23 18:12:39 vérification des données sur cluster-b
+== [18:12:39] Vérification de l'application sur cluster-b
+   postgres-0                1/1   Running   0     37s
+   writer-6b659896f4-ggw4w   1/1   Running   0     37s
+Defaulted container "postgres" out of: postgres, restore-wait (init)
+   lignes : 118, dernier id : 144
+   dernier ts : 2026-10-23T16:12:39.558239Z (il y a 0.947541s)
+Defaulted container "postgres" out of: postgres, restore-wait (init)
+   écarts de plus de 5 s entre deux lignes consécutives : 1
+VERIFY cluster=cluster-b count=118 max_id=144 max_ts=2026-10-23T16:12:39.558239Z gaps_gt5s=1
+
+# Lecture des résultats
+# - La restauration (ressources + volume Kopia) dure 19 s et aboutit sur cluster-b, dont l'emplacement
+#   de sauvegarde est en lecture seule (ReadOnly).
+# - PostgreSQL redémarre seul après restauration ("redo starts" / "database system is ready"), comme
+#   après une coupure de courant : pas de corruption.
+# - Le seul écart de plus de 5 s dans events est la fenêtre entre la sauvegarde et la reprise (c'est le RPO).
+# - max_id > count : la séquence serial avance par blocs de 32 en WAL, elle saute donc des valeurs après
+#   une reprise sur incident. Au J3, juger la continuité sur count(*) et ts, pas sur id.
+# - Namespace app supprimé de cluster-b après l'essai (B est vide pour le J3).

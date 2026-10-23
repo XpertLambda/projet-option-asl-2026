@@ -1,0 +1,9 @@
+# 2026-10-23 18:09:31
+# commande : source '/home/user/.config/projet/velero-minio.env'; ssh -i '/home/user/.config/projet/ssh/id_ed25519' -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR ubuntu@192.168.100.30 "sudo systemctl is-active minio; df -h /srv/minio | tail -1; export MC_HOST_v=http://$VELERO_ACCESS_KEY:$VELERO_SECRET_KEY@127.0.0.1:9000; mc version info v/velero; mc ls v/velero; mc ls v/velero/backups"
+
+active
+/dev/vdb         98G   31M   93G   1% /srv/minio
+v/velero versioning is enabled
+[2026-10-23 18:09:32 CEST]     0B backups/
+[2026-10-23 18:09:32 CEST]     0B kopia/
+[2026-10-23 18:09:32 CEST]     0B smoke-20261023-174512/

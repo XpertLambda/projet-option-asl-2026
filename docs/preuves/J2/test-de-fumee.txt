@@ -1,0 +1,19 @@
+# 2026-10-23 18:09:34
+# commande : '/home/user/projet_option/src/scripts/verify-smoke.sh'
+
+== [18:09:34] Sauvegarde smoke-20261023-180934 du namespace app (cluster-a)
+   NAME                    STATUS      ERRORS   WARNINGS   CREATED                          EXPIRES   STORAGE LOCATION   QUEUE POSITION   SELECTOR
+   smoke-20261023-180934   Completed   0        0          2026-10-23 18:09:35 +0200 CEST   29d       default                             <none>
+BACKUP name=smoke-20261023-180934 phase=Completed duree_s=12
+== [18:09:46] Contenu de la sauvegarde (volumes copiés par Kopia)
+     Pod Volume Backups - kopia:
+       Completed:
+         app/postgres-0: data (size: 48045768, incremental size: 48045768)
+   
+   HooksAttempted:  0
+   HooksFailed:     0
+== [18:09:47] Visibilité depuis cluster-b (synchronisation de l'emplacement toutes les minutes)
+   NAME                    STATUS      ERRORS   WARNINGS   CREATED                          EXPIRES   STORAGE LOCATION   QUEUE POSITION   SELECTOR
+   smoke-20261023-174512   Completed   0        0          2026-10-23 17:45:13 +0200 CEST   29d       default                             <none>
+   smoke-20261023-180934   Completed   0        0          2026-10-23 18:09:35 +0200 CEST   29d       default                             <none>
+SMOKE ok : smoke-20261023-180934 visible depuis cluster-b après 108 s au plus

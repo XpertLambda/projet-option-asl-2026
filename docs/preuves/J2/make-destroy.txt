@@ -1,0 +1,8 @@
+== [18:03:23] Destruction de la VM cluster-a
+   VM supprimée avec ses disques
+== [18:03:23] Destruction de la VM cluster-b
+   VM supprimée avec ses disques
+
+real	0m1.433s
+user	0m0.148s
+sys	0m0.140s
