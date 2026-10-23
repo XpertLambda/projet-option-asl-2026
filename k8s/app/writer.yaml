@@ -1,0 +1,61 @@
+# Écrivain témoin : une ligne par seconde dans events(id, ts). Après restauration,
+# max(ts) donne le point de reprise (RPO). Même image que PostgreSQL (client psql).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: writer-script
+  namespace: app
+data:
+  writer.sh: |
+    #!/bin/sh
+    # Se reconnecte seul si la base disparaît (sinistre, restauration) : pas d'attente
+    # liée au redémarrage du conteneur.
+    export PGHOST=postgres PGUSER="$POSTGRES_USER" PGDATABASE="$POSTGRES_DB" PGPASSWORD="$POSTGRES_PASSWORD" PGCONNECT_TIMEOUT=3
+    while true; do
+      until pg_isready -q; do echo "attente de PostgreSQL"; sleep 1; done
+      psql -q -v ON_ERROR_STOP=1 \
+        -c "CREATE TABLE IF NOT EXISTS events (id serial PRIMARY KEY, ts timestamptz NOT NULL DEFAULT now())" \
+        -c "CREATE INDEX IF NOT EXISTS events_ts_idx ON events (ts)"
+      echo "écriture d'une ligne par seconde"
+      echo 'INSERT INTO events DEFAULT VALUES \watch 1' | psql -q -v ON_ERROR_STOP=1 -o /dev/null
+      echo "connexion perdue, nouvelle tentative"; sleep 1
+    done
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: writer
+  namespace: app
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: writer
+  template:
+    metadata:
+      labels:
+        app: writer
+    spec:
+      containers:
+        - name: writer
+          image: postgres:@POSTGRES_VERSION@
+          command: ["sh", "/scripts/writer.sh"]
+          env:
+            - name: POSTGRES_USER
+              valueFrom: { secretKeyRef: { name: postgres-credentials, key: POSTGRES_USER } }
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: postgres-credentials, key: POSTGRES_PASSWORD } }
+            - name: POSTGRES_DB
+              valueFrom: { secretKeyRef: { name: postgres-credentials, key: POSTGRES_DB } }
+          volumeMounts:
+            - name: script
+              mountPath: /scripts
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 128Mi }
+      volumes:
+        - name: script
+          configMap:
+            name: writer-script
