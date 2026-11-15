@@ -60,7 +60,7 @@ sudo ./infra/setup-host.sh projet     # KVM/libvirt, kubectl, helm, velero, imag
 
 ### 2. Construire la plateforme
 ```bash
-make up        # environ 10 minutes depuis zéro, quelques dizaines de secondes si tout existe
+make up        # 5 à 20 minutes depuis zéro selon le débit du réseau (5 min 31 s le 23/10, environ 20 min le 15/11), environ 30 s si tout existe
 make status    # VM, nœuds, emplacements de sauvegarde, pods, MinIO
 make smoke     # test de fumée : sauvegarde sur A, visible depuis B
 ```
@@ -103,6 +103,9 @@ k3s, Velero et plugin AWS, MinIO et mc (empreintes), PostgreSQL.
 ## Points manuels et pièges connus
 - Le mot de passe `sudo` n'est demandé que pour `infra/setup-host.sh` (installation des paquets).
 - Si un `make` échoue, le relancer : chaque étape reprend là où elle s'est arrêtée.
+- Les images sont téléchargées depuis Docker Hub : avec un réseau lent (environ 1 Mo/s), chaque image
+  prend plusieurs minutes. Les scripts attendent jusqu'à 15 minutes par déploiement (`WAIT_TIMEOUT`,
+  modifiable : `WAIT_TIMEOUT=1800s make up`).
 - Docker Hub limite les téléchargements anonymes (100 par 6 h et par IP) : une dizaine d'images
   par reconstruction, donc ne pas enchaîner plus de quelques reconstructions complètes d'affilée.
 - MinIO : `dl.min.io` ne sert plus de binaire, la source est la release GitHub (voir ADR 0002).
