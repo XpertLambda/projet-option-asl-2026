@@ -26,6 +26,6 @@ source "$CONF_DIR/postgres.env"
 for f in postgres writer; do
   sed "s|@POSTGRES_VERSION@|$PG|g" "$REPO_DIR/k8s/app/$f.yaml" | "${K[@]}" apply -f - >/dev/null
 done
-"${K[@]}" -n app rollout status statefulset/postgres --timeout=300s | sed 's/^/   /'
-"${K[@]}" -n app rollout status deployment/writer --timeout=180s | sed 's/^/   /'
+"${K[@]}" -n app rollout status statefulset/postgres --timeout="$WAIT_TIMEOUT" | sed 's/^/   /'
+"${K[@]}" -n app rollout status deployment/writer --timeout="$WAIT_TIMEOUT" | sed 's/^/   /'
 "${K[@]}" -n app get pods,pvc | sed 's/^/   /'
