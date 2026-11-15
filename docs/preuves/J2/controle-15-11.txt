@@ -1,0 +1,130 @@
+# Contrôle de la plateforme contre la checklist J2, 2026-11-15 22:20:14
+# Aucune destruction ni modification : lectures seules (sauf le refus attendu de destroy-vm.sh).
+
+## Hôte prêt
+$ ./infra/check-host.sh | tail -6
+     [OK]   Image cloud Ubuntu 24.04 présente
+     [OK]   RAM : 15 Go
+     [OK]   Disque libre : 412 Go
+     [OK]   CPU : 4 threads
+   
+   Hôte prêt.
+
+## Mémoire et swap de l'hôte
+$ free -h | sed -n 1,3p; swapon --show; uptime
+                  total        used        free      shared  buff/cache   available
+   Mem:            15Gi       9.6Gi       259Mi        22Mi       6.0Gi       5.9Gi
+   Swap:          4.0Gi       2.0Mi       4.0Gi
+   NAME      TYPE SIZE USED PRIO
+   /swap.img file   4G   2M   -2
+    22:20:14 up 49 min,  3 users,  load average: 0.70, 0.73, 0.80
+
+## Versions figées (versions.yaml) et CLI
+$ grep -v '^#' versions.yaml | grep -v '^$'; velero version --client-only | sed -n 2p
+   ubuntu_image_sha256: 04e8f2461a16a44e78a370284471f29616cdd9baf1893df25807b71f985b6c94
+   k3s_version: v1.35.9+k3s1
+   velero_version: v1.18.1
+   velero_plugin_aws_version: v1.14.4
+   minio_release: RELEASE.2025-09-07T16-13-09Z
+   minio_sha256: 7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f
+   mc_release: RELEASE.2025-08-13T08-35-41Z
+   mc_sha256: 01f866e9c5f9b87c2b09116fa5d7c06695b106242d829a8bb32990c00312e891
+   postgres_version: "17.11"
+   	Version: v1.18.1
+
+## Réseau dr-net et réservations DHCP
+$ virsh net-info dr-net | sed -n 1,5p; virsh net-dumpxml dr-net | grep -o "host mac='[^']*' name='[^']*' ip='[^']*'"; virsh net-dhcp-leases dr-net | awk 'NR>2 && NF {print $6, $5}'
+   Name:           dr-net
+   UUID:           531dd691-b0f1-4b84-a229-0954470451ee
+   Active:         yes
+   Persistent:     yes
+   Autostart:      yes
+   host mac='52:54:00:64:00:10' name='cluster-a' ip='192.168.100.10'
+   host mac='52:54:00:64:00:20' name='cluster-b' ip='192.168.100.20'
+   host mac='52:54:00:64:00:30' name='backup' ip='192.168.100.30'
+   cluster-a 192.168.100.10/24
+   cluster-b 192.168.100.20/24
+   backup 192.168.100.30/24
+
+## VM : ressources déclarées
+$ for v in cluster-a cluster-b backup; do printf '%s: ' $v; virsh dominfo $v | awk '/CPU\(s\)/{c=$2} /Max memory/{m=$3} /Autostart/{a=$2} END{print c" vCPU, "m/1048576" Go, autostart="a}'; done; virsh domblklist backup | tail -4
+   cluster-a: 2 vCPU, 4 Go, autostart=enable
+   cluster-b: 2 vCPU, 4 Go, autostart=enable
+   backup: 1 vCPU, 2 Go, autostart=enable
+    vda      /var/lib/libvirt/images/dr/backup.qcow2
+    vdb      /var/lib/libvirt/images/dr/backup-data.qcow2
+    sda      /var/lib/libvirt/images/dr/backup-seed.iso
+   
+
+## k3s : versions et nœuds
+$ for k in cluster-a cluster-b; do kubectl --kubeconfig ~/.kube/$k.yaml get nodes -o wide --no-headers | awk '{print $1, $2, $5}'; done; stat -c '%a %n' ~/.kube/cluster-a.yaml ~/.kube/cluster-b.yaml
+   cluster-a Ready v1.35.9+k3s1
+   cluster-b Ready v1.35.9+k3s1
+   600 /home/user/.kube/cluster-a.yaml
+   600 /home/user/.kube/cluster-b.yaml
+
+## MinIO : service, disque de données, versionnage, droits de l'utilisateur Velero
+$ source /home/user/.config/projet/velero-minio.env; ssh -i /home/user/.config/projet/ssh/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR ubuntu@192.168.100.30 "sudo systemctl is-active minio; sudo systemctl is-enabled minio; /usr/local/bin/minio --version | head -1; df -h /srv/minio | tail -1; export MC_HOST_v=http://$VELERO_ACCESS_KEY:$VELERO_SECRET_KEY@127.0.0.1:9000; mc version info v/velero; mc ls v/velero; mc mb v/autre-bucket 2>&1 | tail -1"
+   active
+   enabled
+   minio version RELEASE.2025-09-07T16-13-09Z (commit-id=07c3a429bfed433e49018cb0f78a52145d4bedeb)
+   /dev/vdb         98G   80M   93G   1% /srv/minio
+   v/velero versioning is enabled
+   [2026-11-15 22:20:16 CET]     0B backups/
+   [2026-11-15 22:20:16 CET]     0B kopia/
+   [2026-11-15 22:20:16 CET]     0B restores/
+   mc: <ERROR> Unable to make bucket `v/autre-bucket`. Access Denied.
+
+## Application sur cluster-a
+$ ./scripts/verify.sh cluster-a
+   == [22:20:16] Vérification de l'application sur cluster-a
+      postgres-0                1/1   Running   0     23m
+      writer-6b659896f4-b5ggb   1/1   Running   0     23m
+      lignes : 1200, dernier id : 1200
+      dernier ts : 2026-11-15T21:20:17.058558Z (il y a 0.606505s)
+      écarts de plus de 5 s entre deux lignes consécutives : 0
+   VERIFY cluster=cluster-a count=1200 max_id=1200 max_ts=2026-11-15T21:20:17.058558Z gaps_gt5s=0
+
+## Velero sur cluster-a (lecture/écriture)
+$ velero --kubeconfig /home/user/.kube/cluster-a.yaml backup-location get; kubectl --kubeconfig /home/user/.kube/cluster-a.yaml -n velero get pods --no-headers
+   NAME      PROVIDER   BUCKET/PREFIX   PHASE       LAST VALIDATED                  ACCESS MODE   DEFAULT
+   default   aws        velero          Available   2026-11-15 22:19:49 +0100 CET   ReadWrite     true
+   node-agent-d57pg          1/1   Running   0     20m
+   velero-55445ff89c-qfglb   1/1   Running   0     20m
+
+## Velero sur cluster-b (lecture seule)
+$ velero --kubeconfig /home/user/.kube/cluster-b.yaml backup-location get; kubectl --kubeconfig /home/user/.kube/cluster-b.yaml -n velero get pods --no-headers; velero --kubeconfig /home/user/.kube/cluster-b.yaml backup get
+   NAME      PROVIDER   BUCKET/PREFIX   PHASE       LAST VALIDATED                  ACCESS MODE   DEFAULT
+   default   aws        velero          Available   2026-11-15 22:20:02 +0100 CET   ReadOnly      true
+   node-agent-wljt2          1/1   Running   0     8m18s
+   velero-55445ff89c-jrg8h   1/1   Running   0     8m18s
+   NAME                    STATUS      ERRORS   WARNINGS   CREATED                          EXPIRES   STORAGE LOCATION   QUEUE POSITION   SELECTOR
+   smoke-20261023-174512   Completed   0        0          2026-10-23 17:45:13 +0200 CEST   6d        default                             <none>
+   smoke-20261023-180934   Completed   0        0          2026-10-23 18:09:35 +0200 CEST   6d        default                             <none>
+   smoke-20261115-220852   Completed   0        0          2026-11-15 22:08:52 +0100 CET    29d       default                             <none>
+
+## Mot de passe du dépôt Kopia identique sur A et B (empreintes, pas les valeurs)
+$ for k in cluster-a cluster-b; do kubectl --kubeconfig ~/.kube/$k.yaml -n velero get secret velero-repo-credentials -o jsonpath='{.data.repository-password}' | sha256sum | cut -c1-12; done
+   9a8f1bea39ef
+   9a8f1bea39ef
+
+## Protection de la VM backup (refus attendu sans CONFIRM_DESTROY_BACKUP=yes)
+$ ./infra/destroy-vm.sh backup; echo "code retour : $?"; virsh domstate backup
+   ERREUR : la VM backup contient les sauvegardes : relancer avec CONFIRM_DESTROY_BACKUP=yes si c'est voulu
+   code retour : 1
+   running
+   
+
+## Secrets absents du dépôt, droits des fichiers hors dépôt
+$ stat -c '%a %n' ~/.config/projet/*.env ~/.config/projet/ssh/id_ed25519; git status --short | head; git ls-files | grep -ciE 'kubeconfig|\.env|id_ed25519' || true
+   600 /home/user/.config/projet/minio.env
+   600 /home/user/.config/projet/postgres.env
+   600 /home/user/.config/projet/velero-minio.env
+   600 /home/user/.config/projet/velero-repo.env
+   600 /home/user/.config/projet/ssh/id_ed25519
+    M docs/preuves/J2/checklist.md
+   ?? docs/journal/2026-11-15.md
+   ?? docs/preuves/J1/
+   ?? docs/preuves/J2/controle-15-11.txt
+   ?? docs/preuves/J2/reconstruction-15-11.txt
+   0

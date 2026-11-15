@@ -1,0 +1,352 @@
+# Reconstruction du 15/11/2026 (contrôle avant le J2 du 20/11)
+# début : 2026-11-15 21:49:26   hôte démarré depuis : up 19 minutes
+# état avant : cluster-b=running backup=running cluster-a=running 
+
+################ make destroy (21:49:26)
+== [21:49:26] Destruction de la VM cluster-a
+   VM supprimée avec ses disques
+== [21:49:27] Destruction de la VM cluster-b
+   VM supprimée avec ses disques
+################ make destroy : code retour 0, durée 1 s
+
+################ make up (21:49:27)
+Vérification de l'hôte
+  [OK]   Virtualisation matérielle (kvm-ok)
+  [OK]   libvirt accessible sans sudo
+  [OK]   Serveur SSH actif
+  [OK]   Mise en veille désactivée
+  [OK]   Heure synchronisée (NTP)
+  [OK]   Commande git
+  [OK]   Commande make
+  [OK]   Commande kubectl
+  [OK]   Commande helm
+  [OK]   Commande velero
+  [OK]   Commande virt-install
+  [OK]   Commande cloud-localds
+  [OK]   Image cloud Ubuntu 24.04 présente
+  [OK]   RAM : 15 Go
+  [OK]   Disque libre : 418 Go
+  [OK]   CPU : 4 threads
+
+Hôte prêt.
+== [21:49:28] Pools de stockage libvirt
+    Name      State    Autostart
+   -------------------------------
+    dr-base   active   yes
+    dr-vms    active   yes
+   
+== [21:49:30] Réseau dr-net (192.168.100.0/24)
+   réseau déjà défini avec les bonnes réservations
+   Name:           dr-net
+   UUID:           531dd691-b0f1-4b84-a229-0954470451ee
+   Active:         yes
+   Persistent:     yes
+   Autostart:      yes
+   Bridge:         virbr-dr
+   
+== [21:49:30] VM backup (192.168.100.30, 1 vCPU, 2048 Mo, disque 20 Go + données 100 Go)
+   backup prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.30
+== [21:49:33] VM cluster-a (192.168.100.10, 2 vCPU, 4096 Mo, disque 30 Go)
+   volume cluster-a.qcow2 créé
+
+   VM définie et démarrée
+   cluster-a prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.10
+== [21:51:50] VM cluster-b (192.168.100.20, 2 vCPU, 4096 Mo, disque 30 Go)
+   volume cluster-b.qcow2 créé
+
+   VM définie et démarrée
+   cluster-b prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.20
+== [21:53:28] Identifiants MinIO (hors Git)
+   identifiants déjà présents
+== [21:53:28] Binaires MinIO et mc (téléchargement vérifié, copie archivée dans /home/user/.cache/projet)
+   minio.RELEASE.2025-09-07T16-13-09Z déjà en cache (empreinte OK)
+   mc.RELEASE.2025-08-13T08-35-41Z déjà en cache (empreinte OK)
+== [21:53:29] Installation sur la VM backup
+Bucket created successfully `local/velero`.
+local/velero versioning is enabled
+Created policy `velero-bucket` successfully.
+Added user `velero` successfully.
+Attached Policies: [velero-bucket]
+To User: velero
+MinIO prêt ; versionnage : local/velero versioning is enabled
+== [21:53:35] Contrôle depuis l'hôte avec l'utilisateur Velero (bucket accessible, hors bucket refusé)
+   API S3 joignable sur http://192.168.100.30:9000
+   utilisateur velero : accès au bucket velero OK
+   utilisateur velero : création d un autre bucket refusée (OK)
+== [21:53:37] k3s v1.35.9+k3s1 sur cluster-a (192.168.100.10)
+   k3s installé
+   kubeconfig : /home/user/.kube/cluster-a.yaml
+   NAME        STATUS   ROLES           AGE   VERSION        INTERNAL-IP      EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+   cluster-a   Ready    control-plane   6s    v1.35.9+k3s1   192.168.100.10   <none>        Ubuntu 24.04.5 LTS   6.8.0-147-generic   containerd://2.2.7-k3s1
+== [21:55:13] k3s v1.35.9+k3s1 sur cluster-b (192.168.100.20)
+   k3s installé
+   kubeconfig : /home/user/.kube/cluster-b.yaml
+   NAME        STATUS   ROLES           AGE   VERSION        INTERNAL-IP      EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+   cluster-b   Ready    control-plane   5s    v1.35.9+k3s1   192.168.100.20   <none>        Ubuntu 24.04.5 LTS   6.8.0-147-generic   containerd://2.2.7-k3s1
+== [21:56:37] Application sur cluster-a (PostgreSQL 17.11)
+   Waiting for 1 pods to be ready...
+   partitioned roll out complete: 1 new pods have been updated...
+   deployment "writer" successfully rolled out
+   NAME                          READY   STATUS    RESTARTS   AGE
+   pod/postgres-0                1/1     Running   0          3m33s
+   pod/writer-6b659896f4-b5ggb   1/1     Running   0          3m32s
+   
+   NAME                                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+   persistentvolumeclaim/data-postgres-0   Bound    pvc-034ca3f8-5c8c-484e-9be2-bb71fc955e81   5Gi        RWO            local-path     <unset>                 3m33s
+== [22:00:11] Velero v1.18.1 sur cluster-a (emplacement de sauvegarde : rw)
+   An error occurred: 
+   Error installing Velero. Use `kubectl logs deploy/velero -n velero` to check the deploy logs: context deadline exceeded
+make[1]: *** [Makefile:43: velero] Error 1
+make: *** [Makefile:47: up] Error 2
+################ make up : code retour 2, durée 828 s
+
+ARRÊT : make up en échec
+# total : 829 s, fin : 2026-11-15 22:03:15
+
+# ===== Deuxième tentative (2026-11-15 22:04:21) : relance de make up (idempotent) puis make smoke
+# Raison : la première tentative a échoué à l'installation de Velero (velero install --wait expiré,
+# téléchargements d'images de 3 minutes chacun : réseau lent). Les pods Velero étaient démarrés ensuite.
+################ make up (22:04:21)
+Vérification de l'hôte
+  [OK]   Virtualisation matérielle (kvm-ok)
+  [OK]   libvirt accessible sans sudo
+  [OK]   Serveur SSH actif
+  [OK]   Mise en veille désactivée
+  [OK]   Heure synchronisée (NTP)
+  [OK]   Commande git
+  [OK]   Commande make
+  [OK]   Commande kubectl
+  [OK]   Commande helm
+  [OK]   Commande velero
+  [OK]   Commande virt-install
+  [OK]   Commande cloud-localds
+  [OK]   Image cloud Ubuntu 24.04 présente
+  [OK]   RAM : 15 Go
+  [OK]   Disque libre : 413 Go
+  [OK]   CPU : 4 threads
+
+Hôte prêt.
+== [22:04:21] Pools de stockage libvirt
+    Name      State    Autostart
+   -------------------------------
+    dr-base   active   yes
+    dr-vms    active   yes
+   
+== [22:04:23] Réseau dr-net (192.168.100.0/24)
+   réseau déjà défini avec les bonnes réservations
+   Name:           dr-net
+   UUID:           531dd691-b0f1-4b84-a229-0954470451ee
+   Active:         yes
+   Persistent:     yes
+   Autostart:      yes
+   Bridge:         virbr-dr
+   
+== [22:04:23] VM backup (192.168.100.30, 1 vCPU, 2048 Mo, disque 20 Go + données 100 Go)
+   backup prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.30
+== [22:04:25] VM cluster-a (192.168.100.10, 2 vCPU, 4096 Mo, disque 30 Go)
+   cluster-a prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.10
+== [22:04:27] VM cluster-b (192.168.100.20, 2 vCPU, 4096 Mo, disque 30 Go)
+   cluster-b prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.20
+== [22:04:29] Identifiants MinIO (hors Git)
+   identifiants déjà présents
+== [22:04:29] Binaires MinIO et mc (téléchargement vérifié, copie archivée dans /home/user/.cache/projet)
+   minio.RELEASE.2025-09-07T16-13-09Z déjà en cache (empreinte OK)
+   mc.RELEASE.2025-08-13T08-35-41Z déjà en cache (empreinte OK)
+== [22:04:30] Installation sur la VM backup
+Bucket created successfully `local/velero`.
+local/velero versioning is enabled
+Created policy `velero-bucket` successfully.
+Added user `velero` successfully.
+Attached Policies: [velero-bucket]
+To User: velero
+MinIO prêt ; versionnage : local/velero versioning is enabled
+== [22:04:35] Contrôle depuis l'hôte avec l'utilisateur Velero (bucket accessible, hors bucket refusé)
+   API S3 joignable sur http://192.168.100.30:9000
+   utilisateur velero : accès au bucket velero OK
+   utilisateur velero : création d un autre bucket refusée (OK)
+== [22:04:36] k3s v1.35.9+k3s1 sur cluster-a (192.168.100.10)
+   k3s v1.35.9+k3s1 déjà installé
+   kubeconfig : /home/user/.kube/cluster-a.yaml
+   NAME        STATUS   ROLES           AGE     VERSION        INTERNAL-IP      EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+   cluster-a   Ready    control-plane   9m32s   v1.35.9+k3s1   192.168.100.10   <none>        Ubuntu 24.04.5 LTS   6.8.0-147-generic   containerd://2.2.7-k3s1
+== [22:04:39] k3s v1.35.9+k3s1 sur cluster-b (192.168.100.20)
+   k3s v1.35.9+k3s1 déjà installé
+   kubeconfig : /home/user/.kube/cluster-b.yaml
+   NAME        STATUS   ROLES           AGE    VERSION        INTERNAL-IP      EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+   cluster-b   Ready    control-plane   8m9s   v1.35.9+k3s1   192.168.100.20   <none>        Ubuntu 24.04.5 LTS   6.8.0-147-generic   containerd://2.2.7-k3s1
+== [22:04:41] Application sur cluster-a (PostgreSQL 17.11)
+   partitioned roll out complete: 1 new pods have been updated...
+   deployment "writer" successfully rolled out
+   NAME                          READY   STATUS    RESTARTS   AGE
+   pod/postgres-0                1/1     Running   0          8m5s
+   pod/writer-6b659896f4-b5ggb   1/1     Running   0          8m4s
+   
+   NAME                                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+   persistentvolumeclaim/data-postgres-0   Bound    pvc-034ca3f8-5c8c-484e-9be2-bb71fc955e81   5Gi        RWO            local-path     <unset>                 8m5s
+== [22:04:43] Velero v1.18.1 sur cluster-a (emplacement de sauvegarde : rw)
+   Velero déjà installé
+   NAME      PROVIDER   BUCKET/PREFIX   PHASE       LAST VALIDATED                  ACCESS MODE   DEFAULT
+   default   aws        velero          Available   2026-11-15 22:04:44 +0100 CET   ReadWrite     true
+   NAME                      READY   STATUS    RESTARTS   AGE
+   node-agent-d57pg          1/1     Running   0          4m29s
+   velero-55445ff89c-qfglb   1/1     Running   0          4m29s
+== [22:04:44] Velero v1.18.1 sur cluster-b (emplacement de sauvegarde : ro)
+   An error occurred: 
+   Error installing Velero. Use `kubectl logs deploy/velero -n velero` to check the deploy logs: context deadline exceeded
+make[1]: *** [Makefile:44: velero] Error 1
+make: *** [Makefile:47: up] Error 2
+################ make up : code retour 2, durée 206 s
+
+ARRÊT : make up en échec
+# total deuxième tentative : 206 s, fin : 2026-11-15 22:07:47
+
+# ===== Troisième tentative (2026-11-15 22:08:27) : relance de make up (idempotent) puis make smoke
+# Raison : la deuxième tentative a échoué de la même façon sur cluster-b (velero install --wait expiré,
+# images en cours de téléchargement, réseau lent). Les pods de cluster-b sont prêts à la relance.
+################ make up (22:08:27)
+Vérification de l'hôte
+  [OK]   Virtualisation matérielle (kvm-ok)
+  [OK]   libvirt accessible sans sudo
+  [OK]   Serveur SSH actif
+  [OK]   Mise en veille désactivée
+  [OK]   Heure synchronisée (NTP)
+  [OK]   Commande git
+  [OK]   Commande make
+  [OK]   Commande kubectl
+  [OK]   Commande helm
+  [OK]   Commande velero
+  [OK]   Commande virt-install
+  [OK]   Commande cloud-localds
+  [OK]   Image cloud Ubuntu 24.04 présente
+  [OK]   RAM : 15 Go
+  [OK]   Disque libre : 413 Go
+  [OK]   CPU : 4 threads
+
+Hôte prêt.
+== [22:08:27] Pools de stockage libvirt
+    Name      State    Autostart
+   -------------------------------
+    dr-base   active   yes
+    dr-vms    active   yes
+   
+== [22:08:29] Réseau dr-net (192.168.100.0/24)
+   réseau déjà défini avec les bonnes réservations
+   Name:           dr-net
+   UUID:           531dd691-b0f1-4b84-a229-0954470451ee
+   Active:         yes
+   Persistent:     yes
+   Autostart:      yes
+   Bridge:         virbr-dr
+   
+== [22:08:29] VM backup (192.168.100.30, 1 vCPU, 2048 Mo, disque 20 Go + données 100 Go)
+   backup prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.30
+== [22:08:31] VM cluster-a (192.168.100.10, 2 vCPU, 4096 Mo, disque 30 Go)
+   cluster-a prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.10
+== [22:08:33] VM cluster-b (192.168.100.20, 2 vCPU, 4096 Mo, disque 30 Go)
+   cluster-b prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.20
+== [22:08:35] Identifiants MinIO (hors Git)
+   identifiants déjà présents
+== [22:08:35] Binaires MinIO et mc (téléchargement vérifié, copie archivée dans /home/user/.cache/projet)
+   minio.RELEASE.2025-09-07T16-13-09Z déjà en cache (empreinte OK)
+   mc.RELEASE.2025-08-13T08-35-41Z déjà en cache (empreinte OK)
+== [22:08:35] Installation sur la VM backup
+Bucket created successfully `local/velero`.
+local/velero versioning is enabled
+Created policy `velero-bucket` successfully.
+Added user `velero` successfully.
+Attached Policies: [velero-bucket]
+To User: velero
+MinIO prêt ; versionnage : local/velero versioning is enabled
+== [22:08:41] Contrôle depuis l'hôte avec l'utilisateur Velero (bucket accessible, hors bucket refusé)
+   API S3 joignable sur http://192.168.100.30:9000
+   utilisateur velero : accès au bucket velero OK
+   utilisateur velero : création d un autre bucket refusée (OK)
+== [22:08:42] k3s v1.35.9+k3s1 sur cluster-a (192.168.100.10)
+   k3s v1.35.9+k3s1 déjà installé
+   kubeconfig : /home/user/.kube/cluster-a.yaml
+   NAME        STATUS   ROLES           AGE   VERSION        INTERNAL-IP      EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+   cluster-a   Ready    control-plane   13m   v1.35.9+k3s1   192.168.100.10   <none>        Ubuntu 24.04.5 LTS   6.8.0-147-generic   containerd://2.2.7-k3s1
+== [22:08:44] k3s v1.35.9+k3s1 sur cluster-b (192.168.100.20)
+   k3s v1.35.9+k3s1 déjà installé
+   kubeconfig : /home/user/.kube/cluster-b.yaml
+   NAME        STATUS   ROLES           AGE   VERSION        INTERNAL-IP      EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+   cluster-b   Ready    control-plane   12m   v1.35.9+k3s1   192.168.100.20   <none>        Ubuntu 24.04.5 LTS   6.8.0-147-generic   containerd://2.2.7-k3s1
+== [22:08:46] Application sur cluster-a (PostgreSQL 17.11)
+   partitioned roll out complete: 1 new pods have been updated...
+   deployment "writer" successfully rolled out
+   NAME                          READY   STATUS    RESTARTS   AGE
+   pod/postgres-0                1/1     Running   0          12m
+   pod/writer-6b659896f4-b5ggb   1/1     Running   0          12m
+   
+   NAME                                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+   persistentvolumeclaim/data-postgres-0   Bound    pvc-034ca3f8-5c8c-484e-9be2-bb71fc955e81   5Gi        RWO            local-path     <unset>                 12m
+== [22:08:48] Velero v1.18.1 sur cluster-a (emplacement de sauvegarde : rw)
+   Velero déjà installé
+   NAME      PROVIDER   BUCKET/PREFIX   PHASE       LAST VALIDATED                  ACCESS MODE   DEFAULT
+   default   aws        velero          Available   2026-11-15 22:08:48 +0100 CET   ReadWrite     true
+   NAME                      READY   STATUS    RESTARTS   AGE
+   node-agent-d57pg          1/1     Running   0          8m35s
+   velero-55445ff89c-qfglb   1/1     Running   0          8m35s
+== [22:08:50] Velero v1.18.1 sur cluster-b (emplacement de sauvegarde : ro)
+   Velero déjà installé
+   NAME      PROVIDER   BUCKET/PREFIX   PHASE       LAST VALIDATED                  ACCESS MODE   DEFAULT
+   default   aws        velero          Available   2026-11-15 22:08:51 +0100 CET   ReadOnly      true
+   NAME                      READY   STATUS    RESTARTS   AGE
+   node-agent-tmzpn          1/1     Running   0          4m5s
+   velero-55445ff89c-855bl   1/1     Running   0          4m5s
+== make up terminé en 25 s
+################ make up : code retour 0, durée 25 s
+
+################ make smoke (22:08:52)
+== [22:08:52] Sauvegarde smoke-20261115-220852 du namespace app (cluster-a)
+   NAME                    STATUS      ERRORS   WARNINGS   CREATED                         EXPIRES   STORAGE LOCATION   QUEUE POSITION   SELECTOR
+   smoke-20261115-220852   Completed   0        0          2026-11-15 22:08:52 +0100 CET   29d       default                             <none>
+BACKUP name=smoke-20261115-220852 phase=Completed duree_s=7
+== [22:08:59] Contenu de la sauvegarde (volumes copiés par Kopia)
+     Pod Volume Backups - kopia:
+       Completed:
+         app/postgres-0: data (size: 48280428, incremental size: 48280428)
+   
+   HooksAttempted:  0
+   HooksFailed:     0
+== [22:08:59] Visibilité depuis cluster-b (synchronisation de l'emplacement toutes les minutes)
+   NAME                    STATUS      ERRORS   WARNINGS   CREATED                          EXPIRES   STORAGE LOCATION   QUEUE POSITION   SELECTOR
+   smoke-20261023-174512   Completed   0        0          2026-10-23 17:45:13 +0200 CEST   6d        default                             <none>
+   smoke-20261023-180934   Completed   0        0          2026-10-23 18:09:35 +0200 CEST   6d        default                             <none>
+   smoke-20261115-220852   Completed   0        0          2026-11-15 22:08:52 +0100 CET    29d       default                             <none>
+SMOKE ok : smoke-20261115-220852 visible depuis cluster-b après 30 s au plus
+################ make smoke : code retour 0, durée 35 s
+
+# total troisième tentative : 60 s, fin : 2026-11-15 22:09:27
+FINI
+
+# ===== Contrôles après reconstruction (2026-11-15 22:09:35)
+## durées de téléchargement des images (événements Kubernetes)
+-- cluster-a
+app pod/postgres-0                                                   Successfully pulled image "postgres:17.11" in 3m16.931s (3m16.931s including waiting). Image size: 16
+app pod/writer-6b659896f4-b5ggb                                      Successfully pulled image "postgres:17.11" in 3m28.702s (3m28.702s including waiting). Image size: 16
+kube-system pod/coredns-b644fd95b-skmzc                                      Successfully pulled image "rancher/mirrored-coredns-coredns:1.14.7" in 31.533s (31.533s inclu
+kube-system pod/helper-pod-create-pvc-034ca3f8-5c8c-484e-9be2-bb71fc955e81   Successfully pulled image "rancher/mirrored-library-busybox:1.37.0" in 7.172s (7.172s includi
+kube-system pod/local-path-provisioner-d9d8769b6-9srkt                       Successfully pulled image "rancher/local-path-provisioner:v0.0.37" in 21.209s (21.209s includ
+kube-system pod/metrics-server-7f4b6d9bd7-lppb9                              Successfully pulled image "rancher/mirrored-metrics-server:v0.9.0" in 19.891s (19.891s includ
+velero pod/node-agent-d57pg                                             Successfully pulled image "velero/velero:v1.18.1" in 2m51.144s (2m51.144s including waiting). Imag
+velero pod/velero-55445ff89c-qfglb                                      Successfully pulled image "velero/velero-plugin-for-aws:v1.14.4" in 2m48.599s (2m48.599s including
+velero pod/velero-55445ff89c-qfglb                                      Successfully pulled image "velero/velero:v1.18.1" in 678ms (678ms including waiting). Image size: 
+-- cluster-b
+kube-system pod/coredns-b644fd95b-pt78h                   Successfully pulled image "rancher/mirrored-coredns-coredns:1.14.7" in 1m35.045s (1m35.045s including waiting). 
+kube-system pod/local-path-provisioner-d9d8769b6-7pmzb    Successfully pulled image "rancher/local-path-provisioner:v0.0.37" in 1m27.776s (1m27.776s including waiting). I
+kube-system pod/metrics-server-7f4b6d9bd7-tcfbs           Successfully pulled image "rancher/mirrored-metrics-server:v0.9.0" in 1m30.627s (1m30.627s including waiting). I
+velero pod/node-agent-tmzpn                          Successfully pulled image "velero/velero:v1.18.1" in 3m38.356s (3m38.356s including waiting). Image size: 83329660 by
+velero pod/velero-55445ff89c-855bl                   Successfully pulled image "velero/velero-plugin-for-aws:v1.14.4" in 2m24.127s (2m24.127s including waiting). Image si
+velero pod/velero-55445ff89c-855bl                   Successfully pulled image "velero/velero:v1.18.1" in 1m12.826s (1m12.826s including waiting). Image size: 83329660 by
+
+   writer-6b659896f4-b5ggb   1/1   Running   0     12m
+   lignes : 560, dernier id : 560
+   dernier ts : 2026-11-15T21:09:37.058595Z (il y a 0.029527s)
+   écarts de plus de 5 s entre deux lignes consécutives : 0
+VERIFY cluster=cluster-a count=560 max_id=560 max_ts=2026-11-15T21:09:37.058595Z gaps_gt5s=0
+   cluster-a   Ready    control-plane   14m   v1.35.9+k3s1
+   default   Available   49s              9m22s   true
+   cluster-b   Ready    control-plane   13m   v1.35.9+k3s1
+   default   Available   47s              4m51s   true
+   health: 200
