@@ -12,6 +12,9 @@ NET_NAME="dr-net"
 POOL_BASE="dr-base"      # image de base (lecture seule)
 POOL_VMS="dr-vms"        # disques des VM
 BASE_IMAGE="noble.img"
+# Délai d'attente des déploiements Kubernetes : les images viennent de Docker Hub et le débit
+# du réseau varie beaucoup (le 15/11, un téléchargement de 160 Mo a pris plus de 3 minutes).
+WAIT_TIMEOUT="${WAIT_TIMEOUT:-900s}"
 SSH_KEY="$CONF_DIR/ssh/id_ed25519"
 SSH_OPTS=(-i "$SSH_KEY" -o IdentitiesOnly=yes -o StrictHostKeyChecking=no
           -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=5)

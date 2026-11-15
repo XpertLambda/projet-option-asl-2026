@@ -48,6 +48,6 @@ for i in $(seq 1 60); do
   [[ "$(kubectl --kubeconfig "$KC" -n kube-system get deploy --no-headers 2>/dev/null | wc -l)" -ge 3 ]] && break
   sleep 2
 done
-kubectl --kubeconfig "$KC" -n kube-system wait --for=condition=Available deploy --all --timeout=240s >/dev/null \
+kubectl --kubeconfig "$KC" -n kube-system wait --for=condition=Available deploy --all --timeout="$WAIT_TIMEOUT" >/dev/null \
   || die "composants système de $VM non prêts (kubectl -n kube-system get pods)"
 kubectl --kubeconfig "$KC" get nodes -o wide | sed 's/^/   /'
