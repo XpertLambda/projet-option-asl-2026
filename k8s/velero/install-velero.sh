@@ -33,21 +33,26 @@ if "${K[@]}" -n velero get deployment velero >/dev/null 2>&1; then
 else
   cred="$(mktemp)"; trap 'rm -f "$cred"' EXIT
   printf '[default]\naws_access_key_id=%s\naws_secret_access_key=%s\n' "$VELERO_ACCESS_KEY" "$VELERO_SECRET_KEY" > "$cred"
-  "${V[@]}" install --provider aws \
+  # Pas de --wait : son délai interne (environ 3 minutes) est trop court quand le téléchargement
+  # des images est lent. L'attente se fait plus bas avec rollout status et WAIT_TIMEOUT.
+  out="$("${V[@]}" install --provider aws \
     --image "velero/velero:$VEL" --plugins "velero/velero-plugin-for-aws:$PLUGIN" \
     --bucket velero --secret-file "$cred" \
     --backup-location-config "region=minio,s3ForcePathStyle=true,s3Url=$S3URL" \
     --use-volume-snapshots=false --use-node-agent --uploader-type kopia --default-volumes-to-fs-backup \
     --velero-pod-cpu-request 100m --velero-pod-mem-request 128Mi \
-    --node-agent-pod-cpu-request 100m --node-agent-pod-mem-request 256Mi --node-agent-pod-mem-limit 1Gi \
-    --wait 2>&1 | grep -E 'Velero is installed|error|Error' | sed 's/^/   /'
+    --node-agent-pod-cpu-request 100m --node-agent-pod-mem-request 256Mi --node-agent-pod-mem-limit 1Gi 2>&1)" \
+    || { printf '%s\n' "$out" | tail -10 | sed 's/^/   /'; die "velero install en échec sur $CL"; }
+  info "ressources Velero créées, attente du téléchargement des images (jusqu'à $WAIT_TIMEOUT)"
 fi
 
 # Mode d'accès de l'emplacement de sauvegarde
 access=ReadWrite; [[ "$MODE" == ro ]] && access=ReadOnly
 "${K[@]}" -n velero patch backupstoragelocation default --type merge -p "{\"spec\":{\"accessMode\":\"$access\"}}" >/dev/null
-"${K[@]}" -n velero rollout status deployment/velero --timeout=180s >/dev/null
-"${K[@]}" -n velero rollout status daemonset/node-agent --timeout=180s >/dev/null
+"${K[@]}" -n velero rollout status deployment/velero --timeout="$WAIT_TIMEOUT" >/dev/null \
+  || die "deployment velero non prêt sur $CL après $WAIT_TIMEOUT (kubectl -n velero describe pod)"
+"${K[@]}" -n velero rollout status daemonset/node-agent --timeout="$WAIT_TIMEOUT" >/dev/null \
+  || die "daemonset node-agent non prêt sur $CL après $WAIT_TIMEOUT (kubectl -n velero describe pod)"
 
 # Attente de la validation de l'emplacement (phase Available)
 for i in $(seq 1 60); do
