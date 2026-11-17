@@ -1,0 +1,134 @@
+# Reconstruction depuis zéro avec le correctif des délais d'attente
+# Début : 2026-11-17 17:23:06  (WAIT_TIMEOUT=900s par défaut)
+# Commit : af3f9a7
+
+=== make destroy : début 17:23:06
+== [17:23:06] Destruction de la VM cluster-a
+   VM supprimée avec ses disques
+== [17:23:07] Destruction de la VM cluster-b
+   VM supprimée avec ses disques
+=== make destroy : fin 17:23:08, code 0, durée 2 s
+
+=== make up : début 17:23:08
+Vérification de l'hôte
+  [OK]   Virtualisation matérielle (kvm-ok)
+  [OK]   libvirt accessible sans sudo
+  [OK]   Serveur SSH actif
+  [OK]   Mise en veille désactivée
+  [OK]   Heure synchronisée (NTP)
+  [OK]   Commande git
+  [OK]   Commande make
+  [OK]   Commande kubectl
+  [OK]   Commande helm
+  [OK]   Commande velero
+  [OK]   Commande virt-install
+  [OK]   Commande cloud-localds
+  [OK]   Image cloud Ubuntu 24.04 présente
+  [OK]   RAM : 15 Go
+  [OK]   Disque libre : 418 Go
+  [OK]   CPU : 4 threads
+
+Hôte prêt.
+== [17:23:08] Pools de stockage libvirt
+    Name      State    Autostart
+   -------------------------------
+    dr-base   active   yes
+    dr-vms    active   yes
+   
+== [17:23:10] Réseau dr-net (192.168.100.0/24)
+   réseau déjà défini avec les bonnes réservations
+   Name:           dr-net
+   UUID:           531dd691-b0f1-4b84-a229-0954470451ee
+   Active:         yes
+   Persistent:     yes
+   Autostart:      yes
+   Bridge:         virbr-dr
+   
+== [17:23:10] VM backup (192.168.100.30, 1 vCPU, 2048 Mo, disque 20 Go + données 100 Go)
+   backup prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.30
+== [17:23:13] VM cluster-a (192.168.100.10, 2 vCPU, 4096 Mo, disque 30 Go)
+   volume cluster-a.qcow2 créé
+
+   VM définie et démarrée
+   cluster-a prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.10
+== [17:24:11] VM cluster-b (192.168.100.20, 2 vCPU, 4096 Mo, disque 30 Go)
+   volume cluster-b.qcow2 créé
+
+   VM définie et démarrée
+   cluster-b prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.20
+== [17:25:10] Identifiants MinIO (hors Git)
+   identifiants déjà présents
+== [17:25:10] Binaires MinIO et mc (téléchargement vérifié, copie archivée dans /home/user/.cache/projet)
+   minio.RELEASE.2025-09-07T16-13-09Z déjà en cache (empreinte OK)
+   mc.RELEASE.2025-08-13T08-35-41Z déjà en cache (empreinte OK)
+== [17:25:10] Installation sur la VM backup
+Bucket created successfully `local/velero`.
+local/velero versioning is enabled
+Created policy `velero-bucket` successfully.
+Added user `velero` successfully.
+Attached Policies: [velero-bucket]
+To User: velero
+MinIO prêt ; versionnage : local/velero versioning is enabled
+== [17:25:16] Contrôle depuis l'hôte avec l'utilisateur Velero (bucket accessible, hors bucket refusé)
+   API S3 joignable sur http://192.168.100.30:9000
+   utilisateur velero : accès au bucket velero OK
+   utilisateur velero : création d un autre bucket refusée (OK)
+== [17:25:17] k3s v1.35.9+k3s1 sur cluster-a (192.168.100.10)
+   k3s installé
+   kubeconfig : /home/user/.kube/cluster-a.yaml
+   NAME        STATUS   ROLES           AGE   VERSION        INTERNAL-IP      EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+   cluster-a   Ready    control-plane   6s    v1.35.9+k3s1   192.168.100.10   <none>        Ubuntu 24.04.5 LTS   6.8.0-147-generic   containerd://2.2.7-k3s1
+== [17:25:41] k3s v1.35.9+k3s1 sur cluster-b (192.168.100.20)
+   k3s installé
+   kubeconfig : /home/user/.kube/cluster-b.yaml
+   NAME        STATUS   ROLES           AGE   VERSION        INTERNAL-IP      EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+   cluster-b   Ready    control-plane   5s    v1.35.9+k3s1   192.168.100.20   <none>        Ubuntu 24.04.5 LTS   6.8.0-147-generic   containerd://2.2.7-k3s1
+== [17:26:07] Application sur cluster-a (PostgreSQL 17.11)
+   Waiting for 1 pods to be ready...
+   partitioned roll out complete: 1 new pods have been updated...
+   deployment "writer" successfully rolled out
+   NAME                          READY   STATUS    RESTARTS   AGE
+   pod/postgres-0                1/1     Running   0          23s
+   pod/writer-6b659896f4-crq5z   1/1     Running   0          22s
+   
+   NAME                                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+   persistentvolumeclaim/data-postgres-0   Bound    pvc-9a4c0487-eea3-45df-8220-0833e91957ba   5Gi        RWO            local-path     <unset>                 23s
+== [17:26:31] Velero v1.18.1 sur cluster-a (emplacement de sauvegarde : rw)
+   ressources Velero créées, attente du téléchargement des images (jusqu'à 900s)
+   NAME      PROVIDER   BUCKET/PREFIX   PHASE       LAST VALIDATED                  ACCESS MODE   DEFAULT
+   default   aws        velero          Available   2026-11-17 17:27:03 +0100 CET   ReadWrite     true
+   NAME                      READY   STATUS    RESTARTS   AGE
+   node-agent-cx998          1/1     Running   0          29s
+   velero-55445ff89c-rq858   1/1     Running   0          29s
+== [17:27:03] Velero v1.18.1 sur cluster-b (emplacement de sauvegarde : ro)
+   ressources Velero créées, attente du téléchargement des images (jusqu'à 900s)
+   NAME      PROVIDER   BUCKET/PREFIX   PHASE       LAST VALIDATED                  ACCESS MODE   DEFAULT
+   default   aws        velero          Available   2026-11-17 17:27:19 +0100 CET   ReadOnly      true
+   NAME                      READY   STATUS    RESTARTS   AGE
+   node-agent-bxbcl          1/1     Running   0          14s
+   velero-55445ff89c-92gp5   1/1     Running   0          14s
+== make up terminé en 252 s
+=== make up : fin 17:27:20, code 0, durée 252 s
+
+=== make smoke : début 17:27:20
+== [17:27:20] Sauvegarde smoke-20261117-172720 du namespace app (cluster-a)
+   NAME                    STATUS      ERRORS   WARNINGS   CREATED                         EXPIRES   STORAGE LOCATION   QUEUE POSITION   SELECTOR
+   smoke-20261117-172720   Completed   0        0          2026-11-17 17:27:20 +0100 CET   29d       default                             <none>
+BACKUP name=smoke-20261117-172720 phase=Completed duree_s=11
+== [17:27:32] Contenu de la sauvegarde (volumes copiés par Kopia)
+     Pod Volume Backups - kopia:
+       Completed:
+         app/postgres-0: data (size: 47884836, incremental size: 47884836)
+   
+   HooksAttempted:  0
+   HooksFailed:     0
+== [17:27:32] Visibilité depuis cluster-b (synchronisation de l'emplacement toutes les minutes)
+   NAME                    STATUS      ERRORS   WARNINGS   CREATED                          EXPIRES   STORAGE LOCATION   QUEUE POSITION   SELECTOR
+   smoke-20261023-174512   Completed   0        0          2026-10-23 17:45:13 +0200 CEST   4d        default                             <none>
+   smoke-20261023-180934   Completed   0        0          2026-10-23 18:09:35 +0200 CEST   4d        default                             <none>
+   smoke-20261115-220852   Completed   0        0          2026-11-15 22:08:52 +0100 CET    28d       default                             <none>
+   smoke-20261117-172720   Completed   0        0          2026-11-17 17:27:20 +0100 CET    29d       default                             <none>
+SMOKE ok : smoke-20261117-172720 visible depuis cluster-b après 51 s au plus
+=== make smoke : fin 17:28:22, code 0, durée 62 s
+
+# Fin : 2026-11-17 17:28:22
