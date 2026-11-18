@@ -104,8 +104,10 @@ k3s, Velero et plugin AWS, MinIO et mc (empreintes), PostgreSQL.
 - Le mot de passe `sudo` n'est demandé que pour `infra/setup-host.sh` (installation des paquets).
 - Si un `make` échoue, le relancer : chaque étape reprend là où elle s'est arrêtée.
 - Les images sont téléchargées depuis Docker Hub : avec un réseau lent (environ 1 Mo/s), chaque image
-  prend plusieurs minutes. Les scripts attendent jusqu'à 15 minutes par déploiement (`WAIT_TIMEOUT`,
-  modifiable : `WAIT_TIMEOUT=1800s make up`).
+  prend plusieurs minutes. Les scripts attendent un état (déploiement prêt, nœud `Ready`, emplacement de
+  sauvegarde `Available`, SSH, sauvegarde visible depuis B), sans durée fixe : le plafond de 15 minutes
+  par attente (`WAIT_TIMEOUT`, en secondes avec le suffixe `s`, par exemple `WAIT_TIMEOUT=1800s make up`)
+  n'est qu'une borne contre une attente infinie.
 - Docker Hub limite les téléchargements anonymes (100 par 6 h et par IP) : une dizaine d'images
   par reconstruction, donc ne pas enchaîner plus de quelques reconstructions complètes d'affilée.
 - MinIO : `dl.min.io` ne sert plus de binaire, la source est la release GitHub (voir ADR 0002).
