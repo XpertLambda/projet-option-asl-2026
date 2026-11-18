@@ -16,11 +16,8 @@ velero --kubeconfig "$KA" backup describe "$NAME" --details | sed -n '/Pod Volum
 
 log "Visibilité depuis cluster-b (synchronisation de l'emplacement toutes les minutes)"
 VB=(velero --kubeconfig "$(kubeconfig cluster-b)")
-for i in $(seq 1 60); do
-  if "${VB[@]}" backup get "$NAME" >/dev/null 2>&1; then
-    "${VB[@]}" backup get | sed 's/^/   /'
-    echo "SMOKE ok : $NAME visible depuis cluster-b après $((i*3)) s au plus"; exit 0
-  fi
-  sleep 3
-done
-die "$NAME toujours invisible depuis cluster-b après 3 minutes"
+visible_depuis_b() { "${VB[@]}" backup get "$NAME"; }
+t0=$SECONDS
+wait_for "$NAME toujours invisible depuis cluster-b" visible_depuis_b
+"${VB[@]}" backup get | sed 's/^/   /'
+echo "SMOKE ok : $NAME visible depuis cluster-b après $((SECONDS - t0)) s au plus"
