@@ -55,11 +55,7 @@ access=ReadWrite; [[ "$MODE" == ro ]] && access=ReadOnly
   || die "daemonset node-agent non prêt sur $CL après $WAIT_TIMEOUT (kubectl -n velero describe pod)"
 
 # Attente de la validation de l'emplacement (phase Available)
-for i in $(seq 1 60); do
-  phase="$("${K[@]}" -n velero get backupstoragelocation default -o jsonpath='{.status.phase}' 2>/dev/null || true)"
-  [[ "$phase" == Available ]] && break
-  [[ $i -lt 60 ]] || die "emplacement de sauvegarde non disponible (phase : ${phase:-inconnue}) : velero --kubeconfig $KC backup-location get"
-  sleep 2
-done
+bsl_available() { [[ "$("${K[@]}" -n velero get backupstoragelocation default -o jsonpath='{.status.phase}' 2>/dev/null || true)" == Available ]]; }
+wait_for "emplacement de sauvegarde non disponible sur $CL (voir : velero --kubeconfig $KC backup-location get)" bsl_available
 "${V[@]}" backup-location get | sed 's/^/   /'
 "${K[@]}" -n velero get pods | sed 's/^/   /'
