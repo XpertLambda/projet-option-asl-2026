@@ -131,9 +131,27 @@ Repli si la RAM sature (swap) : `cluster-b` à 3 Go et `backup` à 1,5 Go.
    enregistrée (t0).
 3. **Reprise** (`make restore`) : sur `cluster-b`, Velero liste les sauvegardes
    présentes dans MinIO et restaure la plus récente.
-4. **Validation** : pods `Ready`, PostgreSQL répond, `count(*)` et `max(ts)` lus dans
-   `events`. L'heure de retour du service est enregistrée (t1).
-5. **Calcul** : RTO = t1 - t0 ; RPO = (dernière écriture avant t0) - `max(ts)` restauré.
+4. **Validation** : contrôle de cohérence sur les lignes restaurées, avant la première nouvelle
+   écriture. L'écrivain reste à 0 réplique jusqu'à la fin du contrôle, puis est remis à 1. Le
+   contrôle vérifie :
+   - les pods sont `Ready` et PostgreSQL répond ;
+   - `count(*)` > 0 ;
+   - aucun `id` en double ;
+   - `ts` croissant avec l'`id` ;
+   - aucun écart de plus de 5 s entre deux lignes restaurées consécutives ;
+   - `max(ts)` inférieur ou égal à t0.
+
+   Un trou d'ids sans ligne n'est pas une anomalie (voir `docs/preuves/J2/ecart-id-lignes.md`) : la
+   continuité se juge sur `ts`.
+5. **Calcul** :
+   - **t0** : instant relevé juste avant la commande qui détruit `cluster-a` (`virsh destroy`).
+     Juste avant, `max(ts)` est relevé sur `cluster-a` en lecture seule : c'est la dernière écriture
+     connue avant le sinistre ;
+   - **t1** : instant où l'application répond sur `cluster-b` **et** où le contrôle de cohérence de
+     l'étape 4 a réussi. t1 n'est jamais posé avant la fin du contrôle ;
+   - RTO = t1 - t0 ; RPO = (`max(ts)` lu sur `cluster-a` avant t0) - `max(ts)` restauré ;
+   - si le contrôle échoue : t1 n'est pas posé, l'essai est enregistré « incohérent » dans
+     `results/runs.csv`, reste compté comme échec et n'entre pas dans la médiane du RTO.
 
 ## 7. Mesures prévues (J4)
 

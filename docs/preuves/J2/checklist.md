@@ -11,7 +11,7 @@ depuis zéro ; `make destroy` les retire. Échéance : vendredi 20/11/2026 18:00
 
 ## Critères
 
-| Critère | Statut au 15/11 | Preuve |
+| Critère | Statut (dernière vérification) | Preuve |
 |---------|-----------------|--------|
 | Versions figées dans `versions.yaml`, lues par les scripts | Fait, confirmé | `versions.txt`, `controle-15-11.txt` |
 | Réseau `dr-net` avec réservations DHCP (.10 A, .20 B, .30 backup) | Fait, confirmé | `reseau.txt`, `controle-15-11.txt` |
