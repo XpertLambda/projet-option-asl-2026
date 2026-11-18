@@ -15,6 +15,8 @@ BASE_IMAGE="noble.img"
 # Délai d'attente des déploiements Kubernetes : les images viennent de Docker Hub et le débit
 # du réseau varie beaucoup (le 15/11, un téléchargement de 160 Mo a pris plus de 3 minutes).
 WAIT_TIMEOUT="${WAIT_TIMEOUT:-900s}"
+[[ "$WAIT_TIMEOUT" =~ ^[0-9]+s$ ]] || { echo "ERREUR : WAIT_TIMEOUT doit être un nombre de secondes suivi de s (ex. 900s), reçu '$WAIT_TIMEOUT'" >&2; exit 1; }
+WAIT_SECONDS="${WAIT_TIMEOUT%s}"
 SSH_KEY="$CONF_DIR/ssh/id_ed25519"
 SSH_OPTS=(-i "$SSH_KEY" -o IdentitiesOnly=yes -o StrictHostKeyChecking=no
           -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=5)
@@ -22,6 +24,18 @@ SSH_OPTS=(-i "$SSH_KEY" -o IdentitiesOnly=yes -o StrictHostKeyChecking=no
 log()  { if [[ -t 1 ]]; then printf '\033[1m== %s\033[0m\n' "$*"; else printf '== [%s] %s\n' "$(date +%T)" "$*"; fi; }
 info() { printf '   %s\n' "$*"; }
 die()  { printf 'ERREUR : %s\n' "$*" >&2; exit 1; }
+
+# wait_for <description> <commande...> : attente sur un état. Relance la commande toutes les 2 s
+# jusqu'à ce qu'elle réussisse ; le plafond (WAIT_TIMEOUT, 900 s par défaut) n'est qu'une borne
+# haute contre une attente infinie, il ne cadence pas l'attente.
+wait_for() {
+  local what="$1"; shift
+  local end=$(( SECONDS + WAIT_SECONDS ))
+  until "$@" >/dev/null 2>&1; do
+    (( SECONDS < end )) || die "$what : état non atteint après $WAIT_TIMEOUT"
+    sleep 2
+  done
+}
 
 # ver <cle> : valeur de la clé dans versions.yaml
 ver() {

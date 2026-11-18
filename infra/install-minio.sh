@@ -81,7 +81,7 @@ UNIT
 systemctl daemon-reload
 systemctl enable minio >/dev/null 2>&1
 systemctl restart minio
-for i in $(seq 1 30); do curl -sf http://127.0.0.1:9000/minio/health/live && break; sleep 1; done
+for i in $(seq 1 300); do curl -sf http://127.0.0.1:9000/minio/health/live && break; sleep 1; done   # attente sur l'état, plafond 5 min
 curl -sf http://127.0.0.1:9000/minio/health/live || { echo "MinIO ne démarre pas"; journalctl -u minio -n 20 --no-pager; exit 1; }
 
 # Bucket, versionnage, utilisateur et politique limités au bucket velero

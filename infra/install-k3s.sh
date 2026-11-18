@@ -31,23 +31,19 @@ else
 fi
 
 KC="$(kubeconfig "$VM")"; mkdir -p "$KUBE_DIR"; chmod 700 "$KUBE_DIR"
-for i in $(seq 1 60); do vm_ssh "$VM" 'sudo test -s /etc/rancher/k3s/k3s.yaml' && break; [[ $i -lt 60 ]] || die "k3s.yaml absent sur $VM après 2 minutes"; sleep 2; done
+k3s_yaml_present() { vm_ssh "$VM" 'sudo test -s /etc/rancher/k3s/k3s.yaml'; }
+wait_for "k3s.yaml absent sur $VM" k3s_yaml_present
 vm_ssh "$VM" 'sudo cat /etc/rancher/k3s/k3s.yaml' \
   | sed -e "s|https://127.0.0.1:6443|https://$IP:6443|" -e "s/: default$/: $VM/" -e "s/name: default$/name: $VM/" \
         -e "s/cluster: default$/cluster: $VM/" -e "s/user: default$/user: $VM/" > "$KC"
 chmod 600 "$KC"
 info "kubeconfig : $KC"
 
-for i in $(seq 1 60); do
-  [[ "$(kubectl --kubeconfig "$KC" get nodes --no-headers 2>/dev/null | awk '{print $2}')" == Ready ]] && break
-  [[ $i -lt 60 ]] || die "le nœud $VM n'est pas Ready après 2 minutes"
-  sleep 2
-done
+node_ready() { [[ "$(kubectl --kubeconfig "$KC" get nodes --no-headers 2>/dev/null | awk '{print $2}')" == Ready ]]; }
+wait_for "le nœud $VM n'est pas Ready" node_ready
 # Attente des composants système (coredns, local-path-provisioner, metrics-server)
-for i in $(seq 1 60); do
-  [[ "$(kubectl --kubeconfig "$KC" -n kube-system get deploy --no-headers 2>/dev/null | wc -l)" -ge 3 ]] && break
-  sleep 2
-done
+system_deploys_present() { [[ "$(kubectl --kubeconfig "$KC" -n kube-system get deploy --no-headers 2>/dev/null | wc -l)" -ge 3 ]]; }
+wait_for "composants système de $VM absents (coredns, local-path-provisioner, metrics-server)" system_deploys_present
 kubectl --kubeconfig "$KC" -n kube-system wait --for=condition=Available deploy --all --timeout="$WAIT_TIMEOUT" >/dev/null \
   || die "composants système de $VM non prêts (kubectl -n kube-system get pods)"
 kubectl --kubeconfig "$KC" get nodes -o wide | sed 's/^/   /'

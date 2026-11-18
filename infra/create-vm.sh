@@ -55,11 +55,8 @@ else
 fi
 
 # Attente de SSH puis de la fin de cloud-init
-for i in $(seq 1 90); do
-  if ssh "${SSH_OPTS[@]}" "ubuntu@$IP" true 2>/dev/null; then break; fi
-  [[ $i -lt 90 ]] || die "SSH ne répond pas sur $IP après 3 minutes (voir : virsh console $NAME)"
-  sleep 2
-done
+ssh_up() { ssh "${SSH_OPTS[@]}" "ubuntu@$IP" true; }
+wait_for "SSH ne répond pas sur $IP (voir : virsh console $NAME)" ssh_up
 vm_ssh "$NAME" 'sudo cloud-init status --wait >/dev/null; test -f /var/lib/cloud/instance/dr-ready' \
   || die "cloud-init n'a pas terminé correctement sur $NAME (voir /var/log/cloud-init-output.log)"
 info "$NAME prêt : ssh -i $SSH_KEY ubuntu@$IP"
