@@ -1,0 +1,48 @@
+# Sauvegarde planifiée sur cluster-a (J3, premier élément) : 2026-11-20 16:01:55, commit de base d7de591
+
+$ make schedule   (première exécution)
+== [16:01:55] Planification des sauvegardes sur cluster-a (app-15min)
+   schedule.velero.io/app-15min created
+== [16:01:56] Attente de la première sauvegarde planifiée terminée (jusqu'à 900s)
+   NAME        STATUS    CREATED                         SCHEDULE       BACKUP TTL   LAST BACKUP   SELECTOR   PAUSED
+   app-15min   Enabled   2026-11-20 16:01:56 +0100 CET   */15 * * * *   72h0m0s      6s ago        <none>     false
+   NAME                       STATUS      ERRORS   WARNINGS   CREATED                         EXPIRES   STORAGE LOCATION   QUEUE POSITION   SELECTOR
+   app-15min-20261120151518   Completed   0        0          2026-11-20 16:15:18 +0100 CET   2d        default                             <none>
+durée : 810 s
+
+$ make schedule   (seconde exécution, idempotence)
+== [16:15:25] Planification des sauvegardes sur cluster-a (app-15min)
+   schedule.velero.io/app-15min unchanged
+== [16:15:26] Attente de la première sauvegarde planifiée terminée (jusqu'à 900s)
+   NAME        STATUS    CREATED                         SCHEDULE       BACKUP TTL   LAST BACKUP   SELECTOR   PAUSED
+   app-15min   Enabled   2026-11-20 16:01:56 +0100 CET   */15 * * * *   72h0m0s      8s ago        <none>     false
+   NAME                       STATUS      ERRORS   WARNINGS   CREATED                         EXPIRES   STORAGE LOCATION   QUEUE POSITION   SELECTOR
+   app-15min-20261120151518   Completed   0        0          2026-11-20 16:15:18 +0100 CET   2d        default                             <none>
+durée : 1 s
+
+$ kubectl -n velero get schedule app-15min -o yaml | spec
+{
+    "schedule": "*/15 * * * *",
+    "skipImmediately": false,
+    "template": {
+        "defaultVolumesToFsBackup": true,
+        "includedNamespaces": [
+            "app"
+        ],
+        "storageLocation": "default",
+        "ttl": "72h0m0s"
+    },
+    "useOwnerReferencesInBackup": false
+}
+
+# Note : à la création, le Schedule n'a lancé aucune sauvegarde. La première (app-15min-20261120151518, 'Completed', 0 erreur, 0 avertissement) est partie au prochain multiple de 15 minutes, 16:15:18, soit 13 min 22 s après la création (16:01:56). Les 810 s de la première exécution sont donc cette attente.
+
+# Exécution avec la version finale du script (plafond = WAIT_TIMEOUT + 900 s, texte corrigé)
+$ make schedule
+== [16:15:39] Planification des sauvegardes sur cluster-a (app-15min)
+   schedule.velero.io/app-15min unchanged
+== [16:15:40] Attente de la première sauvegarde planifiée terminée (prochain multiple de 15 min, plafond 1800 s)
+   NAME        STATUS    CREATED                         SCHEDULE       BACKUP TTL   LAST BACKUP   SELECTOR   PAUSED
+   app-15min   Enabled   2026-11-20 16:01:56 +0100 CET   */15 * * * *   72h0m0s      22s ago       <none>     false
+   NAME                       STATUS      ERRORS   WARNINGS   CREATED                         EXPIRES   STORAGE LOCATION   QUEUE POSITION   SELECTOR
+   app-15min-20261120151518   Completed   0        0          2026-11-20 16:15:18 +0100 CET   2d        default                             <none>
