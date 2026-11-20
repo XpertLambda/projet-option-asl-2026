@@ -5,13 +5,14 @@ I := ./infra
 K := ./k8s
 
 .DEFAULT_GOAL := help
-.PHONY: help check network vms k3s minio app velero up status backup smoke destroy destroy-all
+.PHONY: help check network vms k3s minio app velero up status backup smoke schedule destroy destroy-all
 
 help:
 	@echo "Construction  : make up  (= check network vms minio k3s app velero)"
 	@echo "  étapes      : check network vms k3s minio app velero"
 	@echo "État          : make status"
 	@echo "Test de fumée : make backup | make smoke"
+	@echo "Planification : make schedule  (sauvegarde de cluster-a toutes les 15 min, conservée 72 h)"
 	@echo "Destruction   : make destroy      (cluster-a et cluster-b seulement, les sauvegardes restent)"
 	@echo "                make destroy-all CONFIRM_DESTROY_BACKUP=yes   (tout, y compris la VM backup)"
 	@echo "À venir (J3)  : disaster, restore, demo"
@@ -63,6 +64,9 @@ backup:
 
 smoke:
 	@./scripts/verify-smoke.sh
+
+schedule:
+	@$(K)/velero/schedule.sh
 
 destroy:
 	@$(I)/destroy-vm.sh cluster-a
