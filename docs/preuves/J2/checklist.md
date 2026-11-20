@@ -7,7 +7,7 @@
 ceux du 15/11 et du 17/11 confirment ou corrigent.
 
 Critère du jalon : `make up` construit les 3 VM, les 2 clusters, MinIO, l'application et Velero
-depuis zéro ; `make destroy` les retire. Échéance : vendredi 20/11/2026 18:00 (rencontre avec l'enseignant l'après-midi, pas d'oral le matin).
+depuis zéro ; `make destroy` les retire. Échéance : vendredi 20/11/2026 18:00 (la rencontre avec l'enseignant, prévue l'après-midi du 20/11, est reportée à la semaine suivante ; pas d'oral le matin).
 
 ## Critères
 
@@ -33,7 +33,7 @@ depuis zéro ; `make destroy` les retire. Échéance : vendredi 20/11/2026 18:00
 | Point | Pourquoi | Échéance |
 |-------|----------|----------|
 | Test de `make destroy-all` puis `make up` | Prouve que réseau, pools et MinIO se reconstruisent aussi ; détruit la VM `backup` | À décider par le groupe |
-| Préparation de la rencontre avec l'enseignant | Chaque membre doit pouvoir expliquer chaque script | 20/11 après-midi |
+| Préparation de la rencontre avec l'enseignant | Chaque membre doit pouvoir expliquer chaque script | Semaine du 23/11 (date à confirmer ; reportée du 20/11) |
 | Accès SSH des trois membres à l'hôte | `~/.ssh/authorized_keys` est vide le 15/11 (prévu du 23 au 30/10 dans `docs/plan.md`) | Dès que possible |
 | Cache local des images (plan B du risque R12) | Rendrait la reconstruction indépendante du débit vers Docker Hub | À décider (ADR si retenu) |
 | Observation à rejouer au J3 : écart entre `count(*)` et `max(id)` après restauration | Sans hook PostgreSQL, la séquence restaurée est en avance sur `max(id)` (18 puis 32 ids sans ligne, `ecart-id-lignes.md`) ; cause non testée | Jalon J3 (avec les hooks), juger la continuité sur `count(*)` et `ts` |
