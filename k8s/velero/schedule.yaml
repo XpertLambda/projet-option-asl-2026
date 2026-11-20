@@ -1,0 +1,16 @@
+# Sauvegarde planifiée du namespace app sur cluster-a : toutes les 15 minutes, conservée 72 h.
+# Appliquée par k8s/velero/schedule.sh. Les volumes sont copiés par Kopia (File System Backup).
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: app-15min
+  namespace: velero
+spec:
+  schedule: "*/15 * * * *"
+  useOwnerReferencesInBackup: false
+  template:
+    includedNamespaces:
+      - app
+    ttl: 72h0m0s
+    storageLocation: default
+    defaultVolumesToFsBackup: true
