@@ -58,6 +58,14 @@ wait_for "postgres-0 absent sur cluster-b après la restauration" pg_pod_present
 replicas="$("${K[@]}" -n app get deployment writer -o jsonpath='{.spec.replicas}')"
 [[ "$replicas" == 0 ]] || { "${K[@]}" -n app scale deployment/writer --replicas=0 >/dev/null; die "l'écrivain n'était pas à 0 réplique ($replicas) : essai invalide, écrivain remis à 0"; }
 info "écrivain à 0 réplique pendant le contrôle"
+# Lecture seule de la séquence des ids juste après la restauration, avant la remise de l'écrivain à 1
+# (observation de l'écart d'ids, docs/preuves/J3/ecart-id-lignes-avec-hook.md) ; sans effet sur le statut du contrôle
+if seq="$("${K[@]}" -n app exec -i postgres-0 -c postgres -- sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -X -At -F "|"' \
+    <<<"SELECT last_value, is_called FROM events_id_seq" 2>/dev/null)" && [[ -n "$seq" ]]; then
+  info "events_id_seq après restauration : last_value=${seq%%|*} is_called=${seq##*|}"
+else
+  info "events_id_seq après restauration : lecture impossible"
+fi
 
 # 4. Contrôle de cohérence ; t1 seulement s'il réussit
 set +e
