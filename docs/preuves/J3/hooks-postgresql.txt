@@ -1,0 +1,27 @@
+# Hook Velero pre (CHECKPOINT) sur le pod postgres : preuves du 2026-11-23, lues depuis cluster-b (lecture seule)
+
+$ annotations du pod postgres-0 (k8s/app/postgres.yaml)
+   pre.hook.backup.velero.io/container: postgres
+   pre.hook.backup.velero.io/command: psql ... -c CHECKPOINT
+   pre.hook.backup.velero.io/on-error: Fail
+   pre.hook.backup.velero.io/timeout: 60s
+
+$ velero backup describe hooks-20261123-095534 --details | grep ...
+   Phase:  Completed
+   Started:    2026-11-23 09:55:35 +0100 CET
+   Completed:  2026-11-23 09:55:41 +0100 CET
+       Completed:
+         app/postgres-0: data (size: 70412836, incremental size: 23070057)
+   HooksAttempted:  1
+   HooksFailed:     0
+
+$ velero backup describe app-15min-20261123091533 --details | grep ...
+   Phase:  Completed
+   Started:    2026-11-23 10:15:33 +0100 CET
+   Completed:  2026-11-23 10:15:39 +0100 CET
+       Completed:
+         app/postgres-0: data (size: 48247660, incremental size: 48247660)
+   HooksAttempted:  1
+   HooksFailed:     0
+
+# Remarque : la ligne « Hooks: <none> » de velero describe concerne les hooks définis dans la sauvegarde elle-même ; ici les hooks viennent des annotations du pod, d'où HooksAttempted: 1.

@@ -1,0 +1,45 @@
+# Démonstration J3 : 2026-11-23 10:09:36
+# $ make demo CONFIRM_DISASTER=yes
+== [10:09:36] 1/4 État avant le sinistre : cluster-a (contrôle à titre d'information)
+== [10:09:36] Contrôle de cohérence sur cluster-a
+   postgres-0                1/1   Running   0     40s
+   writer-6b659896f4-cdbtl   1/1   Running   0     40s
+   lignes : 14, dernier id : 14, dernier ts : 2026-11-23T09:09:36.720144Z
+   ids en double : 0 ; ts non croissant avec l'id : 0 ; écarts de plus de 5 s : 0
+VERIFY cluster=cluster-a count=14 max_id=14 max_ts=2026-11-23T09:09:36.720144Z max_epoch=1795424976.720144 gaps_gt5s=0 dup_ids=0 ts_not_increasing=0 t0_check=na status=ok
+== [10:09:37] 2/4 Une sauvegarde planifiée de CETTE instance de cluster-a est-elle visible depuis cluster-b ?
+   cluster-a créé le 2026-11-23T09:08:47Z ; attente de la première sauvegarde planifiée qui suit (prochain multiple de 15 min)
+   app-15min-20261123084050   12m
+   app-15min-20261123084549   12m
+   app-15min-20261123091533   0s
+== [10:17:30] 3/4 Sinistre : destruction de cluster-a
+== [10:17:30] Dernière écriture connue sur cluster-a (lecture seule)
+   max(ts) = 2026-11-23T09:17:29.720316Z (487 lignes)
+== [10:17:30] Destruction de cluster-a (t0 = 2026-11-23T09:17:30Z)
+== [10:17:30] Destruction de la VM cluster-a
+   VM supprimée avec ses disques
+DISASTER t0=1795425450.724685040 t0_iso=2026-11-23T09:17:30Z last_ts=2026-11-23T09:17:29.720316Z rows_a=487 destroyed=yes
+== [10:17:31] 4/4 Reprise sur cluster-b
+== [10:17:31] Restauration de app-15min-20261123091533 sur cluster-b
+   namespace app déjà présent sur cluster-b (reste d'un essai précédent) : suppression
+   Restore completed with status: Completed. You may check for more information using the commands `velero restore describe restore-app-15min-20261123091533-101747` and `velero restore logs restore-app-15min-20261123091533-101747`.
+   écrivain à 0 réplique pendant le contrôle
+   == [10:17:58] Contrôle de cohérence sur cluster-b
+      postgres-0   1/1   Running   0     10s
+   Defaulted container "postgres" out of: postgres, restore-wait (init)
+      lignes : 374, dernier id : 374, dernier ts : 2026-11-23T09:15:36.720179Z
+      ids en double : 0 ; ts non croissant avec l'id : 0 ; écarts de plus de 5 s : 0
+      max(ts) <= t0 : ok
+   VERIFY cluster=cluster-b count=374 max_id=374 max_ts=2026-11-23T09:15:36.720179Z max_epoch=1795425336.720179 gaps_gt5s=0 dup_ids=0 ts_not_increasing=0 t0_check=ok status=ok
+   contrôle réussi : t1 posé, écrivain remis à 1 réplique
+   essai 1 ajouté à results/runs.csv (statut : ok)
+RESTORE backup=app-15min-20261123091533 t0=1795425450.724685040 t1=1795425479.033315890 rto_s=28.309 rpo_s=113.000 rows_restored=374 status=ok
+== [10:18:00] Résultat
+   run,date,strategy,backup,t0,t1,rto_s,last_ts_a,max_ts_restored,rpo_s,rows_restored,backup_duration_s,backup_size_bytes,status
+   1,2026-11-23,S1,app-15min-20261123091533,1795425450.724685040,1795425479.033315890,28.309,2026-11-23T09:17:29.720316Z,2026-11-23T09:15:36.720179Z,113.000,374,6,48247660,ok
+   durée de la démonstration : 504 s. cluster-a est détruit : make up le reconstruit.
+=== make demo : fin 10:18:00, code 0, durée 504 s
+
+# results/runs.csv
+run,date,strategy,backup,t0,t1,rto_s,last_ts_a,max_ts_restored,rpo_s,rows_restored,backup_duration_s,backup_size_bytes,status
+1,2026-11-23,S1,app-15min-20261123091533,1795425450.724685040,1795425479.033315890,28.309,2026-11-23T09:17:29.720316Z,2026-11-23T09:15:36.720179Z,113.000,374,6,48247660,ok

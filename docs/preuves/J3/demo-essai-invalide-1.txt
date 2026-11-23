@@ -1,0 +1,42 @@
+# ESSAI INVALIDE (défaut du script, corrigé ensuite) : à l étape 2 le script a accepté des sauvegardes planifiées de l instance précédente de cluster-a, restées dans le bucket. Le sinistre a détruit le nouveau cluster-a (89 lignes), la restauration a pris la sauvegarde app-15min-20261123084549 (60 809 lignes) antérieure à sa création, le contrôle a conclu à juste titre à une incohérence. Cette ligne a été retirée de results/runs.csv : elle ne mesure pas un RTO.
+# Démonstration J3 : 2026-11-23 10:04:32
+# $ make demo CONFIRM_DISASTER=yes
+== [10:04:32] 1/4 État avant le sinistre : cluster-a (contrôle à titre d'information)
+== [10:04:32] Contrôle de cohérence sur cluster-a
+   postgres-0                1/1   Running   0     54s
+   writer-6b659896f4-v992h   1/1   Running   0     53s
+   lignes : 31, dernier id : 31, dernier ts : 2026-11-23T09:04:33.171912Z
+   ids en double : 0 ; ts non croissant avec l'id : 0 ; écarts de plus de 5 s : 0
+VERIFY cluster=cluster-a count=31 max_id=31 max_ts=2026-11-23T09:04:33.171912Z max_epoch=1795424673.171912 gaps_gt5s=0 dup_ids=0 ts_not_increasing=0 t0_check=na status=ok
+== [10:04:33] 2/4 Une sauvegarde planifiée terminée est-elle visible depuis cluster-b ?
+   app-15min-20261120160018   1s
+   app-15min-20261123084050   1s
+   app-15min-20261123084549   1s
+== [10:05:31] 3/4 Sinistre : destruction de cluster-a
+== [10:05:31] Dernière écriture connue sur cluster-a (lecture seule)
+   max(ts) = 2026-11-23T09:05:31.171925Z (89 lignes)
+== [10:05:31] Destruction de cluster-a (t0 = 2026-11-23T09:05:31Z)
+== [10:05:31] Destruction de la VM cluster-a
+   VM supprimée avec ses disques
+DISASTER t0=1795424731.781025075 t0_iso=2026-11-23T09:05:31Z last_ts=2026-11-23T09:05:31.171925Z rows_a=89 destroyed=yes
+== [10:05:32] 4/4 Reprise sur cluster-b
+== [10:05:32] Restauration de app-15min-20261123084549 sur cluster-b
+   Restore completed with status: Completed. You may check for more information using the commands `velero restore describe restore-app-15min-20261123084549-100532` and `velero restore logs restore-app-15min-20261123084549-100532`.
+   écrivain à 0 réplique pendant le contrôle
+   == [10:06:00] Contrôle de cohérence sur cluster-b
+      postgres-0   1/1   Running   0     27s
+   Defaulted container "postgres" out of: postgres, restore-wait (init)
+      lignes : 60809, dernier id : 60835, dernier ts : 2026-11-23T08:45:51.412005Z
+      ids en double : 0 ; ts non croissant avec l'id : 1 ; écarts de plus de 5 s : 5
+      max(ts) <= t0 : ok
+   VERIFY cluster=cluster-b count=60809 max_id=60835 max_ts=2026-11-23T08:45:51.412005Z max_epoch=1795423551.412005 gaps_gt5s=5 dup_ids=0 ts_not_increasing=1 t0_check=ok status=incoherent
+   INCOHÉRENT : 1 ligne(s) avec ts décroissant;5 écart(s) de plus de 5 s
+   contrôle échoué : t1 non posé, écrivain laissé à 0 réplique, essai noté incohérent
+   essai 1 ajouté à results/runs.csv (statut : incoherent)
+RESTORE backup=app-15min-20261123084549 t0=1795424731.781025075 t1=non_pose rto_s= rpo_s=1179.760 rows_restored=60809 status=incoherent
+make: *** [Makefile:81: demo] Error 1
+=== make demo : fin 10:06:00, code 2, durée 88 s
+
+# results/runs.csv
+run,date,strategy,backup,t0,t1,rto_s,last_ts_a,max_ts_restored,rpo_s,rows_restored,backup_duration_s,backup_size_bytes,status
+1,2026-11-23,S1,app-15min-20261123084549,1795424731.781025075,,,2026-11-23T09:05:31.171925Z,2026-11-23T08:45:51.412005Z,1179.760,60809,5,70371876,incoherent
