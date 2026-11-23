@@ -6,6 +6,8 @@ kubeconfig*
 credentials*
 # Divers
 *.log
+*.swp
+*~
 .vagrant/
 __pycache__/
 .venv/
