@@ -5,17 +5,19 @@ I := ./infra
 K := ./k8s
 
 .DEFAULT_GOAL := help
-.PHONY: help check network vms k3s minio app velero up status backup smoke schedule destroy destroy-all
+.PHONY: help check network vms k3s minio app velero up status backup smoke schedule disaster restore demo destroy destroy-all
 
 help:
-	@echo "Construction  : make up  (= check network vms minio k3s app velero)"
+	@echo "Construction  : make up  (= check network vms minio k3s app velero + planification)"
 	@echo "  étapes      : check network vms k3s minio app velero"
 	@echo "État          : make status"
 	@echo "Test de fumée : make backup | make smoke"
 	@echo "Planification : make schedule  (sauvegarde de cluster-a toutes les 15 min, conservée 72 h)"
 	@echo "Destruction   : make destroy      (cluster-a et cluster-b seulement, les sauvegardes restent)"
 	@echo "                make destroy-all CONFIRM_DESTROY_BACKUP=yes   (tout, y compris la VM backup)"
-	@echo "À venir (J3)  : disaster, restore, demo"
+	@echo "Sinistre (J3) : make disaster CONFIRM_DISASTER=yes   (détruit cluster-a seulement)"
+	@echo "                make restore                           (restaure sur cluster-b, contrôle, RTO/RPO)"
+	@echo "                make demo CONFIRM_DISASTER=yes         (le scénario complet)"
 
 check:
 	@$(I)/check-host.sh
@@ -47,6 +49,7 @@ velero:
 up: check
 	@start=$$(date +%s); \
 	$(MAKE) --no-print-directory vms minio k3s app velero && \
+	SCHEDULE_WAIT=no $(K)/velero/schedule.sh && \
 	echo "== make up terminé en $$(( $$(date +%s) - start )) s"
 
 status:
@@ -67,6 +70,15 @@ smoke:
 
 schedule:
 	@$(K)/velero/schedule.sh
+
+disaster:
+	@./scripts/disaster.sh
+
+restore:
+	@./scripts/restore.sh
+
+demo:
+	@./scripts/demo.sh
 
 destroy:
 	@$(I)/destroy-vm.sh cluster-a
