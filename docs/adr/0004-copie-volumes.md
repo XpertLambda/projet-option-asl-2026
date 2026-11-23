@@ -56,3 +56,14 @@ vers MinIO en complément de Velero, restaurée par `pg_restore` (voir ADR 0001)
 - Le `node-agent` (DaemonSet) doit tourner sur les deux clusters.
 - Les sauvegardes sont incrémentales côté Kopia : on mesurera au J4 la taille et la
   durée des sauvegardes successives.
+
+## Précisé le 23/11/2026
+Hook `pre` utilisé au jalon J3 : **seul `CHECKPOINT`** (annotations du pod `postgres-0`, `k8s/app/postgres.yaml`). Cette
+section précise le choix laissé ouvert au « Point à valider au J3 » ci-dessus ; le texte de la décision n'est pas modifié.
+
+- `pg_backup_start()` et `pg_backup_stop()` ne sont **pas retenus** : les hooks Velero `pre` et `post` sont deux exécutions
+  séparées, sans session SQL commune, alors que la sauvegarde « non exclusive » prend fin avec la session qui l'a ouverte.
+- **Non testé** : ni `pg_backup_start` / `pg_backup_stop`, ni la variante à session maintenue ouverte en arrière-plan n'ont
+  été essayés.
+- Preuves du hook `CHECKPOINT` : `docs/preuves/J3/hooks-postgresql.txt` (`HooksAttempted: 1`, `HooksFailed: 0`) ; réserves
+  dans `docs/preuves/J3/checklist.md`.
