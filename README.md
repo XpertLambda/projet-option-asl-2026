@@ -75,6 +75,7 @@ make smoke     # test de fumée : sauvegarde sur A, visible depuis B
 | `k3s` | `infra/install-k3s.sh` | k3s figé sur A et B, kubeconfig dans `~/.kube/` |
 | `app` | `k8s/app/deploy.sh` | PostgreSQL + écrivain (1 ligne par seconde) sur A |
 | `velero` | `k8s/velero/install-velero.sh` | Velero + Kopia sur A (lecture/écriture) et B (lecture seule) |
+| (fin de `make up`) | `k8s/velero/schedule.sh` | Sauvegarde planifiée de A toutes les 15 min, conservée 72 h (`make schedule` pour l'attendre) |
 
 ### 3. Détruire
 ```bash
@@ -111,7 +112,21 @@ k3s, Velero et plugin AWS, MinIO et mc (empreintes), PostgreSQL.
 - Docker Hub limite les téléchargements anonymes (100 par 6 h et par IP) : une dizaine d'images
   par reconstruction, donc ne pas enchaîner plus de quelques reconstructions complètes d'affilée.
 - MinIO : `dl.min.io` ne sert plus de binaire, la source est la release GitHub (voir ADR 0002).
-- Les cibles `disaster`, `restore` et `demo` arrivent au jalon J3.
+
+## Sinistre et reprise (jalon J3)
+```bash
+make schedule                        # sauvegarde planifiée de A (déjà lancée par make up) ; attend la première sauvegarde
+make disaster CONFIRM_DISASTER=yes   # détruit cluster-a SEULEMENT, relève max(ts) puis t0 juste avant
+make restore                         # restaure la dernière sauvegarde planifiée sur cluster-b, écrivain à 0,
+                                     # contrôle de cohérence, t1, RTO et RPO ajoutés à results/runs.csv
+make demo CONFIRM_DISASTER=yes       # tout le scénario, avec sortie commentée
+make up                              # reconstruit cluster-a après la démonstration
+```
+- `make demo` attend jusqu'à 15 minutes la première sauvegarde planifiée de l'instance actuelle de `cluster-a`
+  (le bucket garde les sauvegardes des instances précédentes, `restore.sh` les refuse).
+- Le contrôle de cohérence est défini dans `docs/architecture.md` (section 6) ; si le contrôle échoue, t1 n'est pas posé et
+  l'essai est noté `incoherent` dans `results/runs.csv`.
+- Preuves : `docs/preuves/J3/`.
 
 ## Preuves
 `docs/preuves/<jalon>/` : sorties de commandes et durées de chaque jalon.
