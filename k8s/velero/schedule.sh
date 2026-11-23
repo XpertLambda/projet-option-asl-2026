@@ -5,6 +5,7 @@
 # 15 minutes (constaté le 20/11 : Schedule créé à 16:01, première sauvegarde à 16:15), donc l'attente
 # peut durer jusqu'à 15 minutes. Idempotent. Uniquement cluster-a : l'emplacement de sauvegarde de
 # cluster-b est en lecture seule.
+# SCHEDULE_WAIT=no : applique le Schedule sans attendre la première sauvegarde (utilisé par make up).
 # Usage : ./k8s/velero/schedule.sh
 set -euo pipefail
 source "$(dirname "$0")/../../infra/lib.sh"
@@ -20,6 +21,11 @@ SCHED=app-15min
 log "Planification des sauvegardes sur $CL ($SCHED)"
 "${K[@]}" apply -f "$(dirname "$0")/schedule.yaml" | sed 's/^/   /'
 
+if [[ "${SCHEDULE_WAIT:-yes}" == no ]]; then
+  info "première sauvegarde au prochain multiple de 15 min (pas d'attente)"
+  "${V[@]}" schedule get | sed 's/^/   /'
+  exit 0
+fi
 WAIT_SECONDS=$((WAIT_SECONDS + 900))   # plafond commun + une période de planification
 log "Attente de la première sauvegarde planifiée terminée (prochain multiple de 15 min, plafond $WAIT_SECONDS s)"
 backup_done() {

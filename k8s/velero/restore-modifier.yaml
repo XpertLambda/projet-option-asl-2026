@@ -1,0 +1,21 @@
+# Règle de restauration Velero (resource modifier) : l'écrivain est restauré à 0 réplique, pour qu'aucune
+# nouvelle ligne ne soit écrite avant la fin du contrôle de cohérence (docs/architecture.md, section 6).
+# scripts/restore.sh remet l'écrivain à 1 une fois le contrôle réussi.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: restore-writer-zero
+  namespace: velero
+data:
+  modifiers.yaml: |
+    version: v1
+    resourceModifierRules:
+      - conditions:
+          groupResource: deployments.apps
+          resourceNameRegex: "^writer$"
+          namespaces:
+            - app
+        patches:
+          - operation: replace
+            path: "/spec/replicas"
+            value: "0"
