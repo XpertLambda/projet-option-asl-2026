@@ -1,0 +1,2 @@
+run,date,strategy,backup,t0,t1,rto_s,last_ts_a,max_ts_restored,rpo_s,rows_restored,backup_duration_s,backup_size_bytes,status
+1,2026-11-23,S1,app-15min-20261123091533,1795425450.724685040,1795425479.033315890,28.309,2026-11-23T09:17:29.720316Z,2026-11-23T09:15:36.720179Z,113.000,374,6,48247660,ok
