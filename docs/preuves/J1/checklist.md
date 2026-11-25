@@ -24,7 +24,7 @@
 | 9 | Plan de travail et rôles | Fait | `docs/plan.md` : rôles principaux et secondaires de chaque membre, calendrier par période, définition de « terminé » d'un jalon | Règle J5 : Ali ne lance pas les scripts d'infrastructure avant la reconstruction à l'aveugle |
 | 10 | Journal de séance pour chaque séance | Partiel | `docs/journal/2026-10-22.md`, `docs/journal/2026-10-23.md`, `docs/journal/2026-11-15.md` | Aucune entrée entre le 23/10 et le 15/11 : aucune séance n'a été consignée sur cette période |
 | 11 | Relecture du cadrage par les trois membres | Fait, selon la déclaration du groupe | Ahmad SAAD, Amer EL JIBBAWE et Ali TERRO déclarent avoir relu ensemble les documents du J1, en salle, le 23/10/2026. Seules traces écrites : le commit `d1431de` (« Revue du cadrage J1 : source des binaires MinIO, hook PostgreSQL, nouveaux risques », attribué à Amer EL JIBBAWE) et la liste des présents du journal du 23/10 (les trois membres), où la relecture figure sous « Prévu » | Aucune autre preuve : la relecture elle-même n'a pas laissé de compte rendu écrit |
-| 12 | Tag Git `J1` sur le commit de validation | À poser | Le tag annoté `J1` est créé le 15/11/2026 sur le commit qui contient cette checklist | Validation tardive, tag non antidaté : sa date est celle du 15/11/2026 |
+| 12 | Tag Git `J1` sur le commit de validation | Fait (en retard) | Tag annoté `J1` posé et poussé le 15/11/2026 sur `af3f9a7`, le commit qui contient cette checklist (statut mis à jour le 25/11) | Validation tardive, tag non antidaté : sa date est celle du 15/11/2026 |
 
 ## Écarts et réserves
 - **Retard** : le jalon est validé 9 jours après l'échéance du 06/11 (tag et checklist du 15/11).

@@ -43,8 +43,8 @@ dispersion). Le RPO dépend de l'âge de la dernière sauvegarde planifiée : de
   sauvegardes terminées après la création du `cluster-a` détruit). La ligne correspondante a été retirée de `results/runs.csv`.
 - **Le contrôle porte sur toute la table `events`.** Une base qui a connu une interruption de plus de 5 s ou un recul d'horloge
   (le 23/11, la table de A avant reconstruction avait 5 interruptions et 1 recul de 0,18 s) est jugée « incohérente » à la restauration
-  (essai à blanc du 23/11). La démonstration est faite sur un cluster-a reconstruit juste avant. Pour le J4, il faudra décider
-  si le contrôle compare à l'état de A avant le sinistre.
+  (essai à blanc du 23/11). La démonstration est faite sur un cluster-a reconstruit juste avant. Pour le J4, décision du groupe
+  du 23/11 : le contrôle reste strict et cluster-a est reconstruit avant chaque essai.
 - **Écart d'ids après restauration** : observé quatre fois (18, 32, 30, 31 ids sans ligne), y compris avec le hook
   `CHECKPOINT`. Le 25/11, les valeurs concordent avec la pré-journalisation de 32 valeurs de la séquence
   (`ecart-id-lignes-avec-hook.md`) : une observation, pas une expérience dédiée. La continuité se juge sur `ts`.
@@ -59,4 +59,4 @@ dispersion). Le RPO dépend de l'âge de la dernière sauvegarde planifiée : de
   (`make destroy && make up`), comme fait le 25/11.
 - **Après la démonstration**, `cluster-a` est détruit ; `make up` le reconstruit. `cluster-b` conserve l'application restaurée
   jusqu'à la prochaine restauration (le script supprime alors l'ancien namespace `app`).
-- Tests faits sur un réseau rapide ; accès SSH des trois membres et cache local des images restent ouverts (checklist J2).
+- Tests faits sur un réseau rapide ; le cache local des images reste à décider (checklist J2).

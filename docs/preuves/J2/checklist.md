@@ -33,8 +33,8 @@ depuis zéro ; `make destroy` les retire. Échéance : vendredi 20/11/2026 18:00
 | Point | Pourquoi | Échéance |
 |-------|----------|----------|
 | Test de `make destroy-all` puis `make up` | Prouve que réseau, pools et MinIO se reconstruisent aussi ; détruit la VM `backup` | À décider par le groupe |
-| Préparation de la rencontre avec l'enseignant | Chaque membre doit pouvoir expliquer chaque script | Semaine du 23/11 (date à confirmer ; reportée du 20/11) |
-| Accès SSH des trois membres à l'hôte | `~/.ssh/authorized_keys` est vide le 15/11 (prévu du 23 au 30/10 dans `docs/plan.md`) | Dès que possible |
+| Préparation de la rencontre avec l'enseignant | Chaque membre doit pouvoir expliquer chaque script | Vendredi 27/11 (reportée du 20/11) |
+| Accès SSH des trois membres à l'hôte | Géré hors du dépôt : les membres peuvent se connecter à la machine (déclaré par le groupe le 25/11 ; le 15/11, `~/.ssh/authorized_keys` était vide) | Fait |
 | Cache local des images (plan B du risque R12) | Rendrait la reconstruction indépendante du débit vers Docker Hub | À décider (ADR si retenu) |
 | Observation à rejouer au J3 : écart entre `count(*)` et `max(id)` après restauration | Sans hook PostgreSQL, la séquence restaurée est en avance sur `max(id)` (18 puis 32 ids sans ligne, `ecart-id-lignes.md`) ; cause non testée | Jalon J3 (avec les hooks), juger la continuité sur `count(*)` et `ts` |
 | Tag `J2` | Posé le 18/11/2026 avec les réserves de ce tableau | Fait |
