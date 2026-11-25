@@ -14,7 +14,7 @@
 | # | Exigence | Statut | Preuve dans le dépôt | Remarques |
 |---|----------|--------|----------------------|-----------|
 | 1 | Dépôt Git dédié, arborescence structurée | Fait | `README.md` (section Arborescence), dossiers `docs/`, `infra/`, `k8s/`, `scripts/` ; remote `origin` = `projet-option-asl-2026` | Premier commit le 22/10/2026 (`0cdf2cc`) |
-| 2 | Document d'architecture de 2 à 3 pages | Fait, longueur à contrôler | `docs/architecture.md` (10 sections, 1305 mots) | Environ 3 pages de texte, davantage une fois les tableaux rendus : à vérifier à l'export PDF |
+| 2 | Document d'architecture de 2 à 3 pages | Fait, **plus long que demandé** | `docs/architecture.md` (10 sections, 1305 mots) | Contrôle du 25/11 : la version taguée `J1` fait 4 pages A4 (10,5 pt, marges de 2 cm, diagramme compté pour un tiers de page) |
 | 3 | Diagramme d'architecture | Fait | `docs/architecture.md` section 2 (diagramme Mermaid : hôte, réseau `dr-net`, 3 VM, flux de sauvegarde et de restauration) | Section 4 : tableau d'adressage |
 | 4 | Les deux environnements planifiés dès le départ | Fait | `docs/architecture.md` sections 2, 4 et 5 (`cluster-a`, `cluster-b`, plus la VM `backup`, adresses et dimensionnement) ; `docs/plan.md` | Cluster A protégé, cluster B de reprise en lecture seule sur les sauvegardes |
 | 5 | ADR sur l'outil de sauvegarde, avec alternative et plan B | Fait | `docs/adr/0001-outil-sauvegarde.md` | Options comparées (Velero, Kasten K10, `pg_dump`, snapshot etcd), alternatives rejetées expliquées, plan B (manifestes Git + `pg_dump`) |
@@ -30,7 +30,8 @@
 - **Retard** : le jalon est validé 9 jours après l'échéance du 06/11 (tag et checklist du 15/11).
 - **Relecture** : établie par la déclaration du groupe et par deux traces écrites indirectes
   (ligne 11) ; il n'existe pas de compte rendu de la relecture.
-- **Longueur** de l'architecture à contrôler (ligne 2).
+- **Longueur** de l'architecture : 4 pages au lieu de 2 à 3 (contrôle du 25/11) ; la version actuelle, enrichie
+  depuis, en fait 5. Non raccourcie : décision du groupe.
 - **Push** : la date du push du 05/11 vient du reflog local ; elle n'a pas pu être confirmée auprès de
   GitHub lors de cette vérification.
 - **Évolutions depuis l'échéance** : aucun document du cadrage n'a été modifié après le 23/10.

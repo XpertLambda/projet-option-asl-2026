@@ -1,0 +1,185 @@
+# Reconstruction de A et B sur réseau lent simulé (débit entrant des VM bridé à 800 Ko/s), sans cache d'images, 2026-11-25T11:49:10+0100, commit ddf021e
+
+===== make destroy (11:49:10) =====
+== [11:49:10] Destruction de la VM cluster-a
+   VM supprimée avec ses disques
+== [11:49:11] Destruction de la VM cluster-b
+   VM supprimée avec ses disques
+===== make destroy : code 0, 1 s =====
+
+===== make vms (11:49:11) =====
+== [11:49:11] Pools de stockage libvirt
+    Name      State    Autostart
+   -------------------------------
+    dr-base   active   yes
+    dr-vms    active   yes
+   
+== [11:49:13] Réseau dr-net (192.168.100.0/24)
+   réseau déjà défini avec les bonnes réservations
+   Name:           dr-net
+   UUID:           bb4ae071-a98a-4763-96c5-8fca13949c9f
+   Active:         yes
+   Persistent:     yes
+   Autostart:      yes
+   Bridge:         virbr-dr
+   
+== [11:49:13] VM backup (192.168.100.30, 1 vCPU, 2048 Mo, disque 20 Go + données 100 Go)
+   backup prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.30
+== [11:49:14] VM cluster-a (192.168.100.10, 2 vCPU, 4096 Mo, disque 30 Go)
+   volume cluster-a.qcow2 créé
+
+   VM définie et démarrée
+   cluster-a prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.10
+== [11:50:05] VM cluster-b (192.168.100.20, 2 vCPU, 4096 Mo, disque 30 Go)
+   volume cluster-b.qcow2 créé
+
+   VM définie et démarrée
+   cluster-b prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.20
+===== make vms : code 0, 106 s =====
+
+===== bridage =====
+cluster-a vnet16 : inbound.average=800 Ko/s
+cluster-b vnet17 : inbound.average=800 Ko/s
+
+===== env IMAGE_CACHE=no make up (11:50:57) =====
+Vérification de l'hôte
+  [OK]   Virtualisation matérielle (kvm-ok)
+  [OK]   libvirt accessible sans sudo
+  [OK]   Serveur SSH actif
+  [OK]   Mise en veille désactivée
+  [OK]   Heure synchronisée (NTP)
+  [OK]   Commande git
+  [OK]   Commande make
+  [OK]   Commande kubectl
+  [OK]   Commande helm
+  [OK]   Commande velero
+  [OK]   Commande virt-install
+  [OK]   Commande cloud-localds
+  [OK]   Image cloud Ubuntu 24.04 présente
+  [OK]   RAM : 15 Go
+  [OK]   Disque libre : 413 Go
+  [OK]   CPU : 4 threads
+
+Hôte prêt.
+== [11:50:57] Pools de stockage libvirt
+    Name      State    Autostart
+   -------------------------------
+    dr-base   active   yes
+    dr-vms    active   yes
+   
+== [11:50:59] Réseau dr-net (192.168.100.0/24)
+   réseau déjà défini avec les bonnes réservations
+   Name:           dr-net
+   UUID:           bb4ae071-a98a-4763-96c5-8fca13949c9f
+   Active:         yes
+   Persistent:     yes
+   Autostart:      yes
+   Bridge:         virbr-dr
+   
+== [11:50:59] VM backup (192.168.100.30, 1 vCPU, 2048 Mo, disque 20 Go + données 100 Go)
+   backup prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.30
+== [11:51:01] VM cluster-a (192.168.100.10, 2 vCPU, 4096 Mo, disque 30 Go)
+   cluster-a prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.10
+== [11:51:02] VM cluster-b (192.168.100.20, 2 vCPU, 4096 Mo, disque 30 Go)
+   cluster-b prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.20
+== [11:51:03] Identifiants MinIO (hors Git)
+   identifiants déjà présents
+== [11:51:03] Binaires MinIO et mc (téléchargement vérifié, copie archivée dans /home/user/.cache/projet)
+   minio.RELEASE.2025-09-07T16-13-09Z déjà en cache (empreinte OK)
+   mc.RELEASE.2025-08-13T08-35-41Z déjà en cache (empreinte OK)
+== [11:51:04] Installation sur la VM backup
+Bucket created successfully `local/velero`.
+local/velero versioning is enabled
+Created policy `velero-bucket` successfully.
+Added user `velero` successfully.
+Attached Policies: [velero-bucket]
+To User: velero
+MinIO prêt ; versionnage : local/velero versioning is enabled
+== [11:51:08] Contrôle depuis l'hôte avec l'utilisateur Velero (bucket accessible, hors bucket refusé)
+   API S3 joignable sur http://192.168.100.30:9000
+   utilisateur velero : accès au bucket velero OK
+   utilisateur velero : création d un autre bucket refusée (OK)
+== [11:51:10] k3s v1.35.9+k3s1 sur cluster-a (192.168.100.10)
+   pas de cache local des images : téléchargement depuis Docker Hub
+   k3s installé
+   kubeconfig : /home/user/.kube/cluster-a.yaml
+   NAME        STATUS   ROLES           AGE   VERSION        INTERNAL-IP      EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+   cluster-a   Ready    control-plane   5s    v1.35.9+k3s1   192.168.100.10   <none>        Ubuntu 24.04.5 LTS   6.8.0-147-generic   containerd://2.2.7-k3s1
+== [11:53:10] k3s v1.35.9+k3s1 sur cluster-b (192.168.100.20)
+   pas de cache local des images : téléchargement depuis Docker Hub
+   k3s installé
+   kubeconfig : /home/user/.kube/cluster-b.yaml
+   NAME        STATUS   ROLES           AGE   VERSION        INTERNAL-IP      EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+   cluster-b   Ready    control-plane   5s    v1.35.9+k3s1   192.168.100.20   <none>        Ubuntu 24.04.5 LTS   6.8.0-147-generic   containerd://2.2.7-k3s1
+== [11:55:12] Application sur cluster-a (PostgreSQL 17.11)
+   Waiting for 1 pods to be ready...
+   partitioned roll out complete: 1 new pods have been updated...
+   deployment "writer" successfully rolled out
+   NAME                          READY   STATUS    RESTARTS   AGE
+   pod/postgres-0                1/1     Running   0          3m47s
+   pod/writer-6b659896f4-9xf5g   1/1     Running   0          3m47s
+   
+   NAME                                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+   persistentvolumeclaim/data-postgres-0   Bound    pvc-ca5143eb-ae9b-4e6e-9758-cf73e8b27239   5Gi        RWO            local-path     <unset>                 3m47s
+== [11:59:00] Velero v1.18.1 sur cluster-a (emplacement de sauvegarde : rw)
+   ressources Velero créées, attente du téléchargement des images (jusqu'à 900s)
+   NAME      PROVIDER   BUCKET/PREFIX   PHASE       LAST VALIDATED                  ACCESS MODE   DEFAULT
+   default   aws        velero          Available   2026-11-25 12:01:56 +0100 CET   ReadWrite     true
+   NAME                      READY   STATUS    RESTARTS   AGE
+   node-agent-xcfhh          1/1     Running   0          2m54s
+   velero-55445ff89c-ktc7z   1/1     Running   0          2m54s
+== [12:01:57] Velero v1.18.1 sur cluster-b (emplacement de sauvegarde : ro)
+   ressources Velero créées, attente du téléchargement des images (jusqu'à 900s)
+   NAME      PROVIDER   BUCKET/PREFIX   PHASE       LAST VALIDATED                  ACCESS MODE   DEFAULT
+   default   aws        velero          Available   2026-11-25 12:04:54 +0100 CET   ReadOnly      true
+   NAME                      READY   STATUS    RESTARTS   AGE
+   node-agent-86sff          1/1     Running   0          2m56s
+   velero-55445ff89c-rr6w2   1/1     Running   0          2m56s
+== [12:04:56] Planification des sauvegardes sur cluster-a (app-15min)
+   schedule.velero.io/app-15min created
+   première sauvegarde au prochain multiple de 15 min (pas d'attente)
+   NAME        STATUS    CREATED                         SCHEDULE       BACKUP TTL   LAST BACKUP   SELECTOR   PAUSED
+   app-15min   Enabled   2026-11-25 12:04:56 +0100 CET   */15 * * * *   72h0m0s      n/a           <none>     false
+== make up terminé en 840 s
+===== env IMAGE_CACHE=no make up : code 0, 840 s =====
+
+===== débit mesuré sur les images =====
+Successfully pulled image "postgres:17.11" in 3m29.927s (3m29.927s including waiting). Image size: 161373073 bytes.
+Successfully pulled image "postgres:17.11" in 3m43.646s (3m43.646s including waiting). Image size: 161373073 bytes.
+Successfully pulled image "rancher/mirrored-coredns-coredns:1.14.7" in 1m26.595s (1m26.595s including waiting). Image size: 24261571 bytes.
+Successfully pulled image "rancher/mirrored-library-busybox:1.37.0" in 9.746s (9.746s including waiting). Image size: 2151353 bytes.
+Successfully pulled image "rancher/local-path-provisioner:v0.0.37" in 1m12.685s (1m12.685s including waiting). Image size: 15066012 bytes.
+Successfully pulled image "rancher/mirrored-metrics-server:v0.9.0" in 1m23.051s (1m23.051s including waiting). Image size: 23258428 bytes.
+Successfully pulled image "velero/velero:v1.18.1" in 2m52.351s (2m52.351s including waiting). Image size: 83329660 bytes.
+Successfully pulled image "velero/velero-plugin-for-aws:v1.14.4" in 2m47.867s (2m47.867s including waiting). Image size: 44708580 bytes.
+Successfully pulled image "velero/velero:v1.18.1" in 3.208s (3.208s including waiting). Image size: 83329660 bytes.
+
+===== bridage retiré =====
+cluster-a vnet16 : inbound.average=0 Ko/s
+cluster-b vnet17 : inbound.average=0 Ko/s
+code final 0
+
+===== make smoke (12:04:57) =====
+== [12:04:57] Sauvegarde smoke-20261125-120457 du namespace app (cluster-a)
+   NAME                    STATUS      ERRORS   WARNINGS   CREATED                         EXPIRES   STORAGE LOCATION   QUEUE POSITION   SELECTOR
+   smoke-20261125-120457   Completed   0        0          2026-11-25 12:04:57 +0100 CET   29d       default                             <none>
+BACKUP name=smoke-20261125-120457 phase=Completed duree_s=6
+== [12:05:04] Contenu de la sauvegarde (volumes copiés par Kopia)
+     Pod Volume Backups - kopia:
+       Completed:
+         app/postgres-0: data (size: 48239468, incremental size: 48239468)
+   
+   HooksAttempted:  1
+   HooksFailed:     0
+== [12:05:04] Visibilité depuis cluster-b (synchronisation de l'emplacement toutes les minutes)
+   NAME                       STATUS      ERRORS   WARNINGS   CREATED                         EXPIRES   STORAGE LOCATION   QUEUE POSITION   SELECTOR
+   app-15min-20261125103041   Completed   0        0          2026-11-25 11:30:41 +0100 CET   2d        default                             <none>
+   cal-113641                 Completed   0        0          2026-11-25 11:36:47 +0100 CET   2d        default                             <none>
+   smoke-20261125-111251      Completed   0        0          2026-11-25 11:12:51 +0100 CET   29d       default                             <none>
+   smoke-20261125-112013      Completed   0        0          2026-11-25 11:20:13 +0100 CET   29d       default                             <none>
+   smoke-20261125-112956      Completed   0        0          2026-11-25 11:29:56 +0100 CET   29d       default                             <none>
+   smoke-20261125-114732      Completed   0        0          2026-11-25 11:47:33 +0100 CET   29d       default                             <none>
+   smoke-20261125-120457      Completed   0        0          2026-11-25 12:04:57 +0100 CET   29d       default                             <none>
+SMOKE ok : smoke-20261125-120457 visible depuis cluster-b après 52 s au plus
+===== make smoke : code 0, 59 s =====
+fin
