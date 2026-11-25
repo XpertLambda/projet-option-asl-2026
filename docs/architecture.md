@@ -130,7 +130,8 @@ Repli si la RAM sature (swap) : `cluster-b` à 3 Go et `backup` à 1,5 Go.
    supprimé (`virsh destroy` + `virsh undefine --remove-all-storage`). L'heure est
    enregistrée (t0).
 3. **Reprise** (`make restore`) : sur `cluster-b`, Velero liste les sauvegardes
-   présentes dans MinIO et restaure la plus récente.
+   présentes dans MinIO et restaure la dernière sauvegarde planifiée terminée de
+   l'instance détruite (le bucket garde aussi celles des instances précédentes).
 4. **Validation** : contrôle de cohérence sur les lignes restaurées, avant la première nouvelle
    écriture. L'écrivain reste à 0 réplique jusqu'à la fin du contrôle, puis est remis à 1. Le
    contrôle vérifie :

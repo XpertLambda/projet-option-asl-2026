@@ -122,6 +122,9 @@ make restore                         # restaure la dernière sauvegarde planifi�
 make demo CONFIRM_DISASTER=yes       # tout le scénario, avec sortie commentée
 make up                              # reconstruit cluster-a après la démonstration
 ```
+- Avant la démonstration, `cluster-a` ne doit pas avoir connu d'interruption (redémarrage de l'hôte, VM arrêtées) :
+  le contrôle porte sur toute la table `events` et jugerait la restauration incohérente. Dans ce cas,
+  `make destroy && make up` d'abord (la VM `backup` et les sauvegardes restent).
 - `make demo` attend jusqu'à 15 minutes la première sauvegarde planifiée de l'instance actuelle de `cluster-a`
   (le bucket garde les sauvegardes des instances précédentes, `restore.sh` les refuse).
 - Le contrôle de cohérence est défini dans `docs/architecture.md` (section 6) ; si le contrôle échoue, t1 n'est pas posé et
