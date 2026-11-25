@@ -1,0 +1,113 @@
+# Reconstruction de cluster-a seul avec le cache d'images, après la démonstration, 2026-11-25T11:32:17+0100
+Vérification de l'hôte
+  [OK]   Virtualisation matérielle (kvm-ok)
+  [OK]   libvirt accessible sans sudo
+  [OK]   Serveur SSH actif
+  [OK]   Mise en veille désactivée
+  [OK]   Heure synchronisée (NTP)
+  [OK]   Commande git
+  [OK]   Commande make
+  [OK]   Commande kubectl
+  [OK]   Commande helm
+  [OK]   Commande velero
+  [OK]   Commande virt-install
+  [OK]   Commande cloud-localds
+  [OK]   Image cloud Ubuntu 24.04 présente
+  [OK]   RAM : 15 Go
+  [OK]   Disque libre : 413 Go
+  [OK]   CPU : 4 threads
+
+Hôte prêt.
+== [11:32:17] Pools de stockage libvirt
+    Name      State    Autostart
+   -------------------------------
+    dr-base   active   yes
+    dr-vms    active   yes
+   
+== [11:32:19] Réseau dr-net (192.168.100.0/24)
+   réseau déjà défini avec les bonnes réservations
+   Name:           dr-net
+   UUID:           bb4ae071-a98a-4763-96c5-8fca13949c9f
+   Active:         yes
+   Persistent:     yes
+   Autostart:      yes
+   Bridge:         virbr-dr
+   
+== [11:32:19] VM backup (192.168.100.30, 1 vCPU, 2048 Mo, disque 20 Go + données 100 Go)
+   backup prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.30
+== [11:32:21] VM cluster-a (192.168.100.10, 2 vCPU, 4096 Mo, disque 30 Go)
+   volume cluster-a.qcow2 créé
+
+   VM définie et démarrée
+   cluster-a prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.10
+== [11:33:17] VM cluster-b (192.168.100.20, 2 vCPU, 4096 Mo, disque 30 Go)
+   cluster-b prêt : ssh -i /home/user/.config/projet/ssh/id_ed25519 ubuntu@192.168.100.20
+== [11:33:19] Identifiants MinIO (hors Git)
+   identifiants déjà présents
+== [11:33:19] Binaires MinIO et mc (téléchargement vérifié, copie archivée dans /home/user/.cache/projet)
+   minio.RELEASE.2025-09-07T16-13-09Z déjà en cache (empreinte OK)
+   mc.RELEASE.2025-08-13T08-35-41Z déjà en cache (empreinte OK)
+== [11:33:19] Installation sur la VM backup
+Bucket created successfully `local/velero`.
+local/velero versioning is enabled
+Created policy `velero-bucket` successfully.
+Added user `velero` successfully.
+Attached Policies: [velero-bucket]
+To User: velero
+MinIO prêt ; versionnage : local/velero versioning is enabled
+== [11:33:24] Contrôle depuis l'hôte avec l'utilisateur Velero (bucket accessible, hors bucket refusé)
+   API S3 joignable sur http://192.168.100.30:9000
+   utilisateur velero : accès au bucket velero OK
+   utilisateur velero : création d un autre bucket refusée (OK)
+== [11:33:26] k3s v1.35.9+k3s1 sur cluster-a (192.168.100.10)
+   copie du cache local des images (339M)
+   k3s installé
+   kubeconfig : /home/user/.kube/cluster-a.yaml
+   8 images du cache importées (4 s d'attente)
+   NAME        STATUS   ROLES           AGE   VERSION        INTERNAL-IP      EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+   cluster-a   Ready    control-plane   6s    v1.35.9+k3s1   192.168.100.10   <none>        Ubuntu 24.04.5 LTS   6.8.0-147-generic   containerd://2.2.7-k3s1
+== [11:33:51] k3s v1.35.9+k3s1 sur cluster-b (192.168.100.20)
+   k3s v1.35.9+k3s1 déjà installé
+   kubeconfig : /home/user/.kube/cluster-b.yaml
+   NAME        STATUS   ROLES           AGE     VERSION        INTERNAL-IP      EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+   cluster-b   Ready    control-plane   5m30s   v1.35.9+k3s1   192.168.100.20   <none>        Ubuntu 24.04.5 LTS   6.8.0-147-generic   containerd://2.2.7-k3s1
+== [11:33:54] Application sur cluster-a (PostgreSQL 17.11)
+   Waiting for 1 pods to be ready...
+   partitioned roll out complete: 1 new pods have been updated...
+   deployment "writer" successfully rolled out
+   NAME                          READY   STATUS    RESTARTS   AGE
+   pod/postgres-0                1/1     Running   0          12s
+   pod/writer-6b659896f4-qs9l9   1/1     Running   0          12s
+   
+   NAME                                    STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+   persistentvolumeclaim/data-postgres-0   Bound    pvc-fe831795-bb18-4008-9455-e168341ddc12   5Gi        RWO            local-path     <unset>                 12s
+== [11:34:08] Velero v1.18.1 sur cluster-a (emplacement de sauvegarde : rw)
+   ressources Velero créées, attente du téléchargement des images (jusqu'à 900s)
+   NAME      PROVIDER   BUCKET/PREFIX   PHASE       LAST VALIDATED                  ACCESS MODE   DEFAULT
+   default   aws        velero          Available   2026-11-25 11:34:18 +0100 CET   ReadWrite     true
+   NAME                      READY   STATUS    RESTARTS   AGE
+   node-agent-ql99x          1/1     Running   0          9s
+   velero-55445ff89c-g7fbk   1/1     Running   0          9s
+== [11:34:19] Velero v1.18.1 sur cluster-b (emplacement de sauvegarde : ro)
+   Velero déjà installé
+   NAME      PROVIDER   BUCKET/PREFIX   PHASE       LAST VALIDATED                  ACCESS MODE   DEFAULT
+   default   aws        velero          Available   2026-11-25 11:33:55 +0100 CET   ReadOnly      true
+   NAME                      READY   STATUS    RESTARTS   AGE
+   node-agent-5fn2l          1/1     Running   0          4m34s
+   velero-55445ff89c-vh4hs   1/1     Running   0          4m34s
+== [11:34:21] Planification des sauvegardes sur cluster-a (app-15min)
+   schedule.velero.io/app-15min created
+   première sauvegarde au prochain multiple de 15 min (pas d'attente)
+   NAME        STATUS    CREATED                         SCHEDULE       BACKUP TTL   LAST BACKUP   SELECTOR   PAUSED
+   app-15min   Enabled   2026-11-25 11:34:21 +0100 CET   */15 * * * *   72h0m0s      n/a           <none>     false
+== make up terminé en 124 s
+===== make up : code 0, 124 s =====
+cluster-a : 0 téléchargement(s) d'image
+
+== [11:34:21] Contrôle de cohérence sur cluster-a
+   postgres-0                1/1   Running   0     26s
+   writer-6b659896f4-qs9l9   1/1   Running   0     26s
+   lignes : 10, dernier id : 10, dernier ts : 2026-11-25T10:34:21.439558Z
+   ids en double : 0 ; ts non croissant avec l'id : 0 ; écarts de plus de 5 s : 0
+VERIFY cluster=cluster-a count=10 max_id=10 max_ts=2026-11-25T10:34:21.439558Z max_epoch=1795602861.439558 gaps_gt5s=0 dup_ids=0 ts_not_increasing=0 t0_check=na status=ok
+code 0

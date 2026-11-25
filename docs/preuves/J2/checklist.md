@@ -25,18 +25,18 @@ depuis zéro ; `make destroy` les retire. Échéance : vendredi 20/11/2026 18:00
 | `make destroy` puis `make up` depuis zéro (A et B) | **Fait.** 23/10 : du premier coup en 5 min 31 s. 15/11 : 3 exécutions et environ 20 min, deux échecs sur `velero install --wait` (réseau lent), d'où la correction (`7540c49`, `1965aab`, `50859b9`). **17/11 : du premier coup, `make destroy` 2 s, `make up` 252 s, `make smoke` 62 s, avec la correction.** Conditions du 17/11 : réseau rapide, commit `af3f9a7`, attentes sur un état (`rollout status`, `kubectl wait`) avec un plafond de 900 s (`WAIT_TIMEOUT`). **18/11 : du premier coup aussi, `make destroy` 1 s, `make up` 262 s, `make smoke` 59 s, commit `ee359d0`, après remplacement des attentes à durée fixe (voir ligne suivante).** Le comportement sur réseau lent n'a été rejoué ni le 17/11 ni le 18/11 | `make-destroy.txt`, `make-up-from-scratch.txt`, `reconstruction-15-11.txt`, [`reconstruction-avec-correctif.txt`](reconstruction-avec-correctif.txt), [`reconstruction-attentes-sur-etat.txt`](reconstruction-attentes-sur-etat.txt) |
 | Aucune attente à durée fixe courte : toutes les attentes portent sur un état, avec un plafond large | **Fait le 18/11.** Fonction `wait_for` (`infra/lib.sh`, plafond `WAIT_TIMEOUT`, 900 s par défaut) pour `k3s.yaml`, nœud `Ready`, composants système, emplacement de sauvegarde `Available`, SSH des VM, visibilité de la sauvegarde depuis B ; les déploiements utilisent `rollout status` / `kubectl wait` avec le même plafond ; santé de MinIO portée de 30 s à 5 min. Reste fixe : la pause de 10 s entre deux essais de l'installateur k3s (relance, pas une attente d'état) | `infra/lib.sh`, `infra/install-k3s.sh`, `infra/create-vm.sh`, `k8s/velero/install-velero.sh`, `scripts/verify-smoke.sh` |
 | La VM `backup` est protégée contre une destruction involontaire | Fait : `destroy-vm.sh backup` refuse sans `CONFIRM_DESTROY_BACKUP=yes` (code 1), la VM reste en marche | `controle-15-11.txt` |
-| Destruction complète y compris `backup` puis reconstruction | **À faire**, sur décision explicite du groupe (`make destroy-all CONFIRM_DESTROY_BACKUP=yes`) | - |
+| Destruction complète y compris `backup` puis reconstruction | **Fait le 25/11**, sur décision du groupe : `make destroy-all` 2 s, `make up` 281 s (sans cache d'images), `make smoke` 60 s, du premier coup ; les sauvegardes d'avant sont perdues | [`destroy-all-25-11.txt`](destroy-all-25-11.txt) |
 | README « de A à Z » | Fait ; durée annoncée corrigée le 15/11 (« 10 minutes » remplacé par 5 à 20 minutes selon le réseau) et `WAIT_TIMEOUT` documenté | `README.md` |
 | Essai préliminaire de restauration sur B (hors protocole J3) | Fait le 23/10 (19 s, données lisibles) ; non refait le 15/11 | `essai-restauration-b.txt` |
 
 ## Ce qui reste ouvert
 | Point | Pourquoi | Échéance |
 |-------|----------|----------|
-| Test de `make destroy-all` puis `make up` | Prouve que réseau, pools et MinIO se reconstruisent aussi ; détruit la VM `backup` | À décider par le groupe |
+| Test de `make destroy-all` puis `make up` | Réseau, pools et MinIO reconstruits aussi (`destroy-all-25-11.txt`) | Fait le 25/11 |
 | Préparation de la rencontre avec l'enseignant | Chaque membre doit pouvoir expliquer chaque script | Vendredi 27/11 (reportée du 20/11) |
 | Accès SSH des trois membres à l'hôte | Géré hors du dépôt : les membres peuvent se connecter à la machine (déclaré par le groupe le 25/11 ; le 15/11, `~/.ssh/authorized_keys` était vide) | Fait |
-| Cache local des images (plan B du risque R12) | Rendrait la reconstruction indépendante du débit vers Docker Hub | À décider (ADR si retenu) |
-| Observation à rejouer au J3 : écart entre `count(*)` et `max(id)` après restauration | Sans hook PostgreSQL, la séquence restaurée est en avance sur `max(id)` (18 puis 32 ids sans ligne, `ecart-id-lignes.md`) ; cause non testée | Jalon J3 (avec les hooks), juger la continuité sur `count(*)` et `ts` |
+| Cache local des images (plan B du risque R12) | Retenu : `make images`, ADR 0005 ; 0 téléchargement à la reconstruction | Fait le 25/11 |
+| Écart entre `count(*)` et `max(id)` après restauration | Rejoué au J3 avec le hook : l'écart persiste et vérifie la pré-journalisation de 32 valeurs de la séquence (`../J3/ecart-id-lignes-avec-hook.md`) ; la continuité se juge sur `ts` | Fait (23 et 25/11) |
 | Tag `J2` | Posé le 18/11/2026 avec les réserves de ce tableau | Fait |
 
 ## Mesures et observations
@@ -60,7 +60,7 @@ réseau, ce qui concrétise deux risques du registre (`docs/risques.md`) :
 
 | Risque | Constat du 15/11 | Traitement |
 |--------|------------------|------------|
-| R12 (Docker Hub) | Les images (PostgreSQL 161 Mo, Velero) sont téléchargées depuis Docker Hub à chaque reconstruction. Débit mesuré d'environ 0,8 Mo/s : 2 à 3,5 minutes par image. | Attentes des déploiements portées à 15 minutes (`WAIT_TIMEOUT`, `infra/lib.sh`) et `velero install --wait` supprimé. Pas encore de cache local des images : plan B du risque, à décider. |
+| R12 (Docker Hub) | Les images (PostgreSQL 161 Mo, Velero) sont téléchargées depuis Docker Hub à chaque reconstruction. Débit mesuré d'environ 0,8 Mo/s : 2 à 3,5 minutes par image. | Attentes des déploiements portées à 15 minutes (`WAIT_TIMEOUT`, `infra/lib.sh`) et `velero install --wait` supprimé. Cache local des images ajouté le 25/11 (ADR 0005). |
 | R14 (réseau amont) | Reconstruction en 3 essais et 20 minutes au lieu de 5 min 31 s le 23/10 ; deux essais ont échoué sur le délai de `velero install --wait`. | Même correction. Reconstruction du premier coup confirmée les 17/11 (252 s) et 18/11 (262 s) sur un réseau rapide ; non rejouée sur réseau lent. |
 
 Conséquence pour une démonstration : la durée d'une reconstruction depuis zéro n'est garantie ni

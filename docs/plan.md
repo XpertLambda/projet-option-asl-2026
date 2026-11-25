@@ -22,7 +22,7 @@ Chacun tient son carnet de bord individuel ; le journal de séance
 | jusqu'au 06/11 | **J1 Cadrage** | Architecture, 4 ADR, registre des risques, ce plan. Tag `J1` | Tous |
 | 06/11 au 13/11 | Scripts VM | `make vms` crée les 3 VM, `make destroy` les supprime | Ahmad |
 | 06/11 au 20/11 | Briques | k3s sur A et B ; MinIO sur `backup` ; PostgreSQL + écrivain sur A ; Velero sur A et B | Ahmad, Amer, Ali |
-| **20/11** | **J2 Socle en place** | `make up` reconstruit tout. Oral J1 + J2 le matin. Tag `J2` | Tous |
+| **20/11** | **J2 Socle en place** | `make up` reconstruit tout. Tag `J2` (pas d'oral ; rencontre avec l'enseignant reportée au 27/11) | Tous |
 | 20/11 au 15/12 | Sinistre et reprise | `Schedule` Velero, `make disaster`, `make restore`, validation des données, premier `make demo` | Amer, Ali |
 | **15/12** | **J3 MVP** | Démonstration de bout en bout avec preuves. Tag `J3` | Tous |
 | 18/12 | Rédaction | Sections du rapport J1 à J3, sauvegarde de la plateforme avant les vacances | Ali |
