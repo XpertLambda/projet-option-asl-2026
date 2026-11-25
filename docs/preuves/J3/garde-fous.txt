@@ -1,0 +1,26 @@
+# Tests des garde-fous, 2026-11-25T10:31:56+0100, commit c7a4468 (aucune destruction, aucune restauration)
+
+$ env -u CONFIRM_DISASTER make --no-print-directory disaster
+ERREUR : destruction de cluster-a : relancer avec CONFIRM_DISASTER=yes (make disaster CONFIRM_DISASTER=yes)
+make: *** [Makefile:75: disaster] Error 1
+code 2
+
+$ env -u CONFIRM_DISASTER make --no-print-directory demo
+ERREUR : la démonstration détruit cluster-a : relancer avec CONFIRM_DISASTER=yes
+make: *** [Makefile:81: demo] Error 1
+code 2
+
+$ env -u CONFIRM_DESTROY_BACKUP ./infra/destroy-vm.sh backup
+ERREUR : la VM backup contient les sauvegardes : relancer avec CONFIRM_DESTROY_BACKUP=yes si c'est voulu
+code 1
+
+$ ./scripts/restore.sh app-15min-20261123153032
+ERREUR : la sauvegarde app-15min-20261123153032 date d'avant la création de cluster-a (2026-11-25T10:17:09+0100) : attendre une sauvegarde de l'instance détruite
+code 1
+
+VM après les tests :
+ Id   Name        State
+---------------------------
+ 3    backup      running
+ 5    cluster-b   running
+

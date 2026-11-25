@@ -38,3 +38,53 @@ ce que les requêtes ont montré.
 - La cause de l'avance de la séquence (non testée). Les hypothèses du 17/11 (checkpoint, pré-journalisation de
   32 valeurs de la séquence) restent des hypothèses : trois observations ne les démontrent pas.
 - Si l'écart suit une règle : trois valeurs (18, 32, 30) ne suffisent pas.
+
+## Quatrième observation (25/11/2026) : séquence lue avant la reprise de l'écrivain
+Démonstration `demo-sinistre-2.txt`, sauvegarde `app-15min-20261125093021` (09:30:21 à 09:30:27 UTC,
+`hooksAttempted: 1`). Cette fois `last_value` est lue par `scripts/restore.sh` juste après la restauration,
+l'écrivain étant à 0 réplique. Les heures sont en UTC.
+
+### Journaux PostgreSQL
+Sur cluster-a (copié avant sa destruction), checkpoint déclenché par le hook :
+```
+09:30:22.532  checkpoint starting: immediate force wait
+09:30:22.551  checkpoint complete: ... lsn=0/19CD948, redo lsn=0/19CD8F0
+```
+Sur cluster-b, au démarrage après restauration :
+```
+09:30:58  database system was interrupted; last known up at 2026-11-25 09:30:22 UTC
+09:30:59  database system was not properly shut down; automatic recovery in progress
+09:30:59  redo starts at 0/19CD8F0
+```
+
+### Lignes et séquence
+| Mesure sur cluster-b | Résultat |
+|----------------------|----------|
+| Avant la reprise de l'écrivain : `count(*)`, `max(id)` | 731, 731 (aucun id manquant) |
+| Avant la reprise de l'écrivain : `last_value`, `is_called` | **762**, `t` |
+| Après la reprise : ids sans ligne | 732 à 762 (**31**) |
+| Après la reprise : lignes autour du trou | id 731 à 09:30:23.914, puis id 763 à 09:31:10.852 |
+
+| id | `ts` | Position |
+|----|------|----------|
+| 729 | 09:30:21.914 | avant le checkpoint du hook |
+| 730 | 09:30:22.914 | **première ligne après le checkpoint** |
+| 731 | 09:30:23.914 | dernière ligne restaurée |
+
+### Ce que cette observation établit
+1. L'avance de la séquence est **déjà présente avant la reprise de l'écrivain** : elle vient de la base restaurée, pas
+   de l'écrivain. Les ids sans ligne sont exactement ceux compris entre `max(id)` restauré et `last_value`.
+2. La récupération sur cluster-b repart de la position du checkpoint du hook (`redo lsn=0/19CD8F0`, même valeur dans
+   les deux journaux), et `last known up at` est l'heure de ce checkpoint. L'hypothèse 1 du 17/11 concorde ici avec les
+   journaux des deux clusters.
+3. `last_value` = 762 = **730 + 32**, où 730 est le premier id attribué après ce checkpoint. C'est ce que prévoit la
+   pré-journalisation de la séquence (hypothèse 2 du 17/11) : au premier `nextval` qui suit un checkpoint, PostgreSQL
+   écrit dans le WAL une valeur en avance de 32, et la récupération restaure cette valeur. L'écart vaut alors
+   32 moins le nombre de lignes récupérées après la première, ici 32 - 1 = 31.
+
+### Limites
+- La concordance chiffrée porte sur **une** observation. Ce n'est pas une expérience dédiée (par exemple en faisant
+  varier le délai entre le checkpoint et la copie), et le code source de PostgreSQL n'a pas été relu pour ce document.
+- Les trois observations précédentes (18, 32, 30) sont compatibles (inférieures ou égales à 32) mais leurs données ne
+  permettent pas le même recoupement.
+- Sans effet sur le contrôle de cohérence : la continuité se juge sur `ts`.

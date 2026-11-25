@@ -1,0 +1,43 @@
+# make demo CONFIRM_DISASTER=yes, 2026-11-25T10:19:51+0100, commit c7a4468
+
+== [10:19:51] 1/4 État avant le sinistre : cluster-a (contrôle à titre d'information)
+== [10:19:51] Contrôle de cohérence sur cluster-a
+   postgres-0                1/1   Running   0     2m6s
+   writer-6b659896f4-jhvms   1/1   Running   0     2m6s
+   lignes : 99, dernier id : 99, dernier ts : 2026-11-25T09:19:51.914561Z
+   ids en double : 0 ; ts non croissant avec l'id : 0 ; écarts de plus de 5 s : 0
+VERIFY cluster=cluster-a count=99 max_id=99 max_ts=2026-11-25T09:19:51.914561Z max_epoch=1795598391.914561 gaps_gt5s=0 dup_ids=0 ts_not_increasing=0 t0_check=na status=ok
+== [10:19:52] 2/4 Une sauvegarde planifiée de CETTE instance de cluster-a est-elle visible depuis cluster-b ?
+   cluster-a créé le 2026-11-25T09:17:09Z ; attente de la première sauvegarde planifiée qui suit (prochain multiple de 15 min)
+   app-15min-20261125085258   11m
+   app-15min-20261123084549   11m
+   app-15min-20261125093021   1s
+== [10:30:41] 3/4 Sinistre : destruction de cluster-a
+== [10:30:41] Dernière écriture connue sur cluster-a (lecture seule)
+   max(ts) = 2026-11-25T09:30:40.914523Z (748 lignes)
+== [10:30:41] Destruction de cluster-a (t0 = 2026-11-25T09:30:41Z)
+== [10:30:41] Destruction de la VM cluster-a
+   VM supprimée avec ses disques
+DISASTER t0=1795599041.511363453 t0_iso=2026-11-25T09:30:41Z last_ts=2026-11-25T09:30:40.914523Z rows_a=748 destroyed=yes
+== [10:30:42] 4/4 Reprise sur cluster-b
+== [10:30:42] Restauration de app-15min-20261125093021 sur cluster-b
+   Restore completed with status: Completed. You may check for more information using the commands `velero restore describe restore-app-15min-20261125093021-103042` and `velero restore logs restore-app-15min-20261125093021-103042`.
+   écrivain à 0 réplique pendant le contrôle
+   events_id_seq après restauration : last_value=762 is_called=t
+   == [10:31:00] Contrôle de cohérence sur cluster-b
+      postgres-0                1/1   Running       0     17s
+      writer-6b659896f4-jhvms   1/1   Terminating   0     17s
+   Defaulted container "postgres" out of: postgres, restore-wait (init)
+      lignes : 731, dernier id : 731, dernier ts : 2026-11-25T09:30:23.914485Z
+      ids en double : 0 ; ts non croissant avec l'id : 0 ; écarts de plus de 5 s : 0
+      max(ts) <= t0 : ok
+   VERIFY cluster=cluster-b count=731 max_id=731 max_ts=2026-11-25T09:30:23.914485Z max_epoch=1795599023.914485 gaps_gt5s=0 dup_ids=0 ts_not_increasing=0 t0_check=ok status=ok
+   contrôle réussi : t1 posé, écrivain remis à 1 réplique
+   essai 2 ajouté à results/runs.csv (statut : ok)
+RESTORE backup=app-15min-20261125093021 t0=1795599041.511363453 t1=1795599060.878503155 rto_s=19.367 rpo_s=17.000 rows_restored=731 status=ok
+== [10:31:01] Résultat
+   run,date,strategy,backup,t0,t1,rto_s,last_ts_a,max_ts_restored,rpo_s,rows_restored,backup_duration_s,backup_size_bytes,status
+   2,2026-11-25,S1,app-15min-20261125093021,1795599041.511363453,1795599060.878503155,19.367,2026-11-25T09:30:40.914523Z,2026-11-25T09:30:23.914485Z,17.000,731,6,48288620,ok
+   durée de la démonstration : 670 s. cluster-a est détruit : make up le reconstruit.
+
+===== make demo : code 0, 670 s =====
