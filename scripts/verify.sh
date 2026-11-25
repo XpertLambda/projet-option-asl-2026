@@ -38,7 +38,7 @@ SQL="SELECT count(*), coalesce(max(id), 0),
   (SELECT count(*) FROM (SELECT ts, lag(ts) OVER (ORDER BY id) AS p FROM events) a WHERE ts < p),
   (SELECT count(*) FROM (SELECT ts - lag(ts) OVER (ORDER BY id) AS d FROM events) b WHERE d > interval '5 seconds')
 FROM events"
-row="$("${K[@]}" -n app exec -i postgres-0 -- sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -X -At -F "|"' <<<"$SQL")" \
+row="$("${K[@]}" -n app exec -i postgres-0 -c postgres -- sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -X -At -F "|"' <<<"$SQL")" \
   || die "PostgreSQL ne répond pas sur $CL"
 IFS='|' read -r count maxid maxts maxepoch dups unordered gaps <<<"$row"
 info "lignes : $count, dernier id : $maxid, dernier ts : $maxts"

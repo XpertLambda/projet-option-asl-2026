@@ -150,6 +150,8 @@ Repli si la RAM sature (swap) : `cluster-b` à 3 Go et `backup` à 1,5 Go.
      connue avant le sinistre ;
    - **t1** : instant où l'application répond sur `cluster-b` **et** où le contrôle de cohérence de
      l'étape 4 a réussi. t1 n'est jamais posé avant la fin du contrôle ;
+   - l'instant de la **première nouvelle écriture** sur `cluster-b` (écrivain remis à 1) est aussi relevé et
+     rapporté à t0, en plus du RTO et sans changer la définition de t1 ;
    - RTO = t1 - t0 ; RPO = (`max(ts)` lu sur `cluster-a` avant t0) - `max(ts)` restauré ;
    - si le contrôle échoue : t1 n'est pas posé, l'essai est enregistré « incohérent » dans
      `results/runs.csv`, reste compté comme échec et n'entre pas dans la médiane du RTO.

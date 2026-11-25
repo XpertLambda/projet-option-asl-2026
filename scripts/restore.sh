@@ -6,6 +6,7 @@
 #   4. si le contrôle réussit : t1 est relevé, l'écrivain est remis à 1 réplique ;
 #      sinon : t1 n'est pas posé, l'écrivain reste à 0, l'essai est noté "incoherent".
 # RTO = t1 - t0 ; RPO = (max(ts) lu sur cluster-a avant t0) - max(ts) restauré.
+# En plus (sans changer t1) : rto_ecriture = instant où la première nouvelle ligne est lue sur cluster-b - t0.
 # t0 et la dernière écriture viennent de scripts/disaster.sh (~/.cache/projet/last-disaster.env).
 # Les essais réels (sinistre non à blanc) sont ajoutés à results/runs.csv.
 # Usage : ./scripts/restore.sh [nom_de_sauvegarde]
@@ -14,12 +15,12 @@ source "$(dirname "$0")/../infra/lib.sh"
 
 STATE="$CACHE_DIR/last-disaster.env"
 [[ -f "$STATE" ]] || die "aucun sinistre enregistré : lancer d'abord make disaster"
+# shellcheck source=/dev/null
 source "$STATE"
 KB="$(kubeconfig cluster-b)"; [[ -f "$KB" ]] || die "kubeconfig absent : $KB"
 K=(kubectl --kubeconfig "$KB"); V=(velero --kubeconfig "$KB")
 CSV="$REPO_DIR/results/runs.csv"
 SCHED=app-15min
-RESTORE_START=$(date +%s.%N)
 awk_calc() { awk "BEGIN { printf \"%.3f\", $1 }"; }
 
 # 1. Sauvegarde à restaurer
@@ -74,7 +75,7 @@ set -e
 printf '%s\n' "$out" | sed 's/^/   /'
 vline="$(printf '%s\n' "$out" | grep '^VERIFY ' | tail -1 || true)"
 field() { sed -n "s/.* $1=\([^ ]*\).*/\1/p" <<<"$vline"; }
-ROWS_B="$(field count)"; MAX_TS_B="$(field max_ts)"; MAX_EPOCH_B="$(field max_epoch)"
+ROWS_B="$(field count)"; MAX_TS_B="$(field max_ts)"; MAX_EPOCH_B="$(field max_epoch)"; MAX_ID_B="$(field max_id)"
 RPO="" ; [[ -n "$MAX_EPOCH_B" ]] && RPO="$(awk_calc "$LAST_EPOCH - $MAX_EPOCH_B")"
 
 # Garde-fou : aucune ligne ne peut être postérieure à la fin de la sauvegarde, sinon l'écrivain a écrit
@@ -84,12 +85,28 @@ if [[ -n "$MAX_EPOCH_B" && -n "$b_end" ]] && awk -v a="$MAX_EPOCH_B" -v b="$(dat
   POST_WRITE=yes; info "ligne postérieure à la fin de la sauvegarde : l'écrivain a écrit avant la fin du contrôle"
 fi
 
-T1_EPOCH=""; RTO=""; STATUS=incoherent
+T1_EPOCH=""; RTO=""; RTO_W=""; STATUS=incoherent
 if (( vrc == 0 )) && [[ "$(field status)" == ok && "$POST_WRITE" == no ]]; then
   T1_EPOCH="$(date +%s.%N)"; RTO="$(awk_calc "$T1_EPOCH - $T0_EPOCH")"; STATUS=ok
   "${K[@]}" -n app scale deployment/writer --replicas=1 >/dev/null
-  "${K[@]}" -n app rollout status deployment/writer --timeout="$WAIT_TIMEOUT" >/dev/null
   info "contrôle réussi : t1 posé, écrivain remis à 1 réplique"
+  # Première nouvelle écriture : une ligne d'id supérieur au dernier id restauré (lecture toutes les 0,5 s)
+  new_row() {
+    [[ "$("${K[@]}" -n app exec -i postgres-0 -c postgres -- sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -X -At' \
+      <<<"SELECT EXISTS (SELECT 1 FROM events WHERE id > $MAX_ID_B)" 2>/dev/null)" == t ]]
+  }
+  end=$(( SECONDS + WAIT_SECONDS ))
+  until new_row; do
+    (( SECONDS < end )) || break
+    sleep 0.5
+  done
+  if new_row; then
+    RTO_W="$(awk_calc "$(date +%s.%N) - $T0_EPOCH")"
+    info "première nouvelle écriture sur cluster-b : $RTO_W s après t0"
+  else
+    info "aucune nouvelle écriture sur cluster-b après $WAIT_TIMEOUT"
+  fi
+  "${K[@]}" -n app rollout status deployment/writer --timeout="$WAIT_TIMEOUT" >/dev/null
 else
   info "contrôle échoué : t1 non posé, écrivain laissé à 0 réplique, essai noté incohérent"
 fi
@@ -101,12 +118,12 @@ B_SIZE="$("${K[@]}" -n velero get podvolumebackup -l "velero.io/backup-name=$BAC
 # Enregistrement (essais réels seulement)
 if [[ "$DESTROYED" == yes ]]; then
   mkdir -p "$(dirname "$CSV")"
-  [[ -f "$CSV" ]] || echo "run,date,strategy,backup,t0,t1,rto_s,last_ts_a,max_ts_restored,rpo_s,rows_restored,backup_duration_s,backup_size_bytes,status" > "$CSV"
+  [[ -f "$CSV" ]] || echo "run,date,strategy,backup,t0,t1,rto_s,last_ts_a,max_ts_restored,rpo_s,rows_restored,backup_duration_s,backup_size_bytes,status,rto_ecriture_s" > "$CSV"
   RUN=$(( $(wc -l < "$CSV") ))
-  echo "$RUN,$(date +%F),S1,$BACKUP,$T0_EPOCH,$T1_EPOCH,$RTO,$LAST_TS,$MAX_TS_B,$RPO,$ROWS_B,$B_DUR,$B_SIZE,$STATUS" >> "$CSV"
+  echo "$RUN,$(date +%F),S1,$BACKUP,$T0_EPOCH,$T1_EPOCH,$RTO,$LAST_TS,$MAX_TS_B,$RPO,$ROWS_B,$B_DUR,$B_SIZE,$STATUS,$RTO_W" >> "$CSV"
   info "essai $RUN ajouté à results/runs.csv (statut : $STATUS)"
 else
   info "essai à blanc (cluster-a non détruit) : non enregistré dans results/runs.csv"
 fi
-echo "RESTORE backup=$BACKUP t0=$T0_EPOCH t1=${T1_EPOCH:-non_pose} rto_s=${RTO:-} rpo_s=${RPO:-} rows_restored=${ROWS_B:-} status=$STATUS"
+echo "RESTORE backup=$BACKUP t0=$T0_EPOCH t1=${T1_EPOCH:-non_pose} rto_s=${RTO:-} rpo_s=${RPO:-} rows_restored=${ROWS_B:-} status=$STATUS rto_ecriture_s=${RTO_W:-}"
 [[ "$STATUS" == ok ]]

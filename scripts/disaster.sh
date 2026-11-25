@@ -14,7 +14,7 @@ DRY=no; [[ "${1:-}" == --dry-run ]] && DRY=yes
 KA="$(kubeconfig cluster-a)"; [[ -f "$KA" ]] || die "kubeconfig absent : $KA"
 
 log "Dernière écriture connue sur cluster-a (lecture seule)"
-row="$(kubectl --kubeconfig "$KA" -n app exec -i postgres-0 -- sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -X -At -F "|"' <<<"SELECT to_char(max(ts) AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"'), extract(epoch from max(ts)), count(*) FROM events")" \
+row="$(kubectl --kubeconfig "$KA" -n app exec -i postgres-0 -c postgres -- sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -X -At -F "|"' <<<"SELECT to_char(max(ts) AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"'), extract(epoch from max(ts)), count(*) FROM events")" \
   || die "cluster-a injoignable : rien à détruire ou PostgreSQL à l'arrêt"
 IFS='|' read -r LAST_TS LAST_EPOCH ROWS_A <<<"$row"
 [[ -n "$LAST_TS" ]] || die "table events vide sur cluster-a"
