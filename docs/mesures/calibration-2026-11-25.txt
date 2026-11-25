@@ -1,0 +1,70 @@
+# Pré-remplissage de 1 000 000 de lignes sur cluster-a, 2026-11-25T11:35:42+0100
+== [11:35:42] Pré-remplissage de events sur cluster-a : 1000000 lignes (les 91 lignes présentes sont effacées)
+   lignes : 1000008
+   table et index : 85 MB
+   base : 93 MB, dont WAL : 208 MB
+   durée du pré-remplissage : 41 s
+code 0, 41 s
+== [11:36:23] Contrôle de cohérence sur cluster-a
+   postgres-0                1/1   Running   0     2m29s
+   writer-6b659896f4-7kx4n   1/1   Running   0     10s
+   lignes : 1000010, dernier id : 1000010, dernier ts : 2026-11-25T10:36:24.225264Z
+   ids en double : 0 ; ts non croissant avec l'id : 0 ; écarts de plus de 5 s : 0
+VERIFY cluster=cluster-a count=1000010 max_id=1000010 max_ts=2026-11-25T10:36:24.225264Z max_epoch=1795602984.225264 gaps_gt5s=0 dup_ids=0 ts_not_increasing=0 t0_check=na status=ok
+code 0
+
+# Calibration du protocole (pas une mesure) : 1 000 000 de lignes, 2026-11-25T11:36:41+0100
+
+== 1. planification en pause
+Schedule app-15min paused successfully
+spec.paused=true
+
+== 2. sauvegarde déclenchée à un instant connu
+T_b=1795603006.904167260 (2026-11-25T10:36:46Z)
+...........
+Backup completed with status: Completed. You may check for more information using the commands `velero backup describe cal-113641` and `velero backup logs cal-113641`.
+étiquette planification=app-15min
+début=2026-11-25T10:36:47Z fin=2026-11-25T10:36:58Z phase=Completed hooks={"hooksAttempted":1}
+volume data : 338640584 octets, 2026-11-25T10:36:49Z à 2026-11-25T10:36:57Z
+
+== 3. visibilité depuis cluster-b
+[1]+  Done                    vm_ssh cluster-a 'vmstat -n 1 60' > "$S/vmstat-a.txt"
+visible depuis B 70 s après T_b
+CPU de cluster-a (vmstat 1 s, 5 s avant T_b puis 55 s) : occupation = 100 - idle
+avant : moyenne 10 % ; après T_b : moyenne 12 %, maximum 52 %
+
+== 4. cache Kopia de cluster-b vidé
+deployment.apps/velero restarted
+daemonset.apps/node-agent restarted
+deployment "velero" successfully rolled out
+daemon set "node-agent" successfully rolled out
+
+== 5. essai à blanc (cluster-a conservé)
+== [11:38:00] Dernière écriture connue sur cluster-a (lecture seule)
+   max(ts) = 2026-11-25T10:38:00.225200Z (1000106 lignes)
+== [11:38:00] Essai à blanc : cluster-a n'est pas détruit
+DISASTER t0=1795603080.635838675 t0_iso=2026-11-25T10:38:00Z last_ts=2026-11-25T10:38:00.225200Z rows_a=1000106 destroyed=no
+== [11:38:00] Restauration de cal-113641 sur cluster-b
+   namespace app déjà présent sur cluster-b (reste d'un essai précédent) : suppression
+   Restore completed with status: Completed. You may check for more information using the commands `velero restore describe restore-cal-113641-113817` and `velero restore logs restore-cal-113641-113817`.
+   écrivain à 0 réplique pendant le contrôle
+   events_id_seq après restauration : last_value=1000066 is_called=t
+   == [11:38:33] Contrôle de cohérence sur cluster-b
+      postgres-0   1/1   Running   0     16s
+      lignes : 1000040, dernier id : 1000040, dernier ts : 2026-11-25T10:36:54.225278Z
+      ids en double : 0 ; ts non croissant avec l'id : 0 ; écarts de plus de 5 s : 0
+      max(ts) <= t0 : ok
+   VERIFY cluster=cluster-b count=1000040 max_id=1000040 max_ts=2026-11-25T10:36:54.225278Z max_epoch=1795603014.225278 gaps_gt5s=0 dup_ids=0 ts_not_increasing=0 t0_check=ok status=ok
+   contrôle réussi : t1 posé, écrivain remis à 1 réplique
+   première nouvelle écriture sur cluster-b : 36.113 s après t0
+   essai à blanc (cluster-a non détruit) : non enregistré dans results/runs.csv
+RESTORE backup=cal-113641 t0=1795603080.635838675 t1=1795603115.314743587 rto_s=34.679 rpo_s=66.000 rows_restored=1000040 status=ok rto_ecriture_s=36.113
+code 0
+
+== 6. planification réactivée
+Schedule app-15min unpaused successfully
+spec.paused=
+téléchargements d'image sur B : 0
+
+== recoupement de la séquence (journal de cluster-a, checkpoint du hook)
+2026-11-25 10:36:47.667 UTC checkpoint starting: immediate force wait ; ligne 1000033 à 10:36:47.225, ligne 1000034 à 10:36:48.225 ; last_value sur B = 1000066 = 1000034 + 32

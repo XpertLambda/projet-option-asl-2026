@@ -88,3 +88,18 @@ Sur cluster-b, au démarrage après restauration :
 - Les trois observations précédentes (18, 32, 30) sont compatibles (inférieures ou égales à 32) mais leurs données ne
   permettent pas le même recoupement.
 - Sans effet sur le contrôle de cohérence : la continuité se juge sur `ts`.
+
+## Cinquième observation (25/11/2026, calibration, base de 1 000 000 de lignes)
+`docs/mesures/calibration-2026-11-25.txt`, restauration à blanc (cluster-a conservé, son journal reste lisible).
+La valeur attendue a été calculée **avant** de lire les lignes de A.
+
+| Mesure | Résultat |
+|--------|----------|
+| Checkpoint du hook sur A | 10:36:47.667 UTC |
+| Dernière ligne avant, première ligne après | id 1000033 à 10:36:47.225 ; **id 1000034** à 10:36:48.225 |
+| `last_value` sur B avant la reprise de l'écrivain | **1000066 = 1000034 + 32** |
+| `max(id)` restauré | 1000040, soit 26 ids sans ligne : 32 - (1000040 - 1000034) |
+
+La formule se vérifie exactement sur deux observations avec l'heure du checkpoint (la quatrième et celle-ci).
+La démonstration de 11:31 (`demo-sinistre-3.txt` : `last_value` = 100, `max(id)` = 69) est compatible (68 + 32),
+sans la vérifier : le journal de A a disparu avec la VM.
