@@ -5,11 +5,13 @@ I := ./infra
 K := ./k8s
 
 .DEFAULT_GOAL := help
-.PHONY: help check network vms k3s minio app velero up status backup smoke schedule disaster restore demo destroy destroy-all
+.PHONY: help check network vms k3s minio app velero images prefill up status backup smoke schedule disaster restore demo destroy destroy-all
 
 help:
 	@echo "Construction  : make up  (= check network vms minio k3s app velero + planification)"
 	@echo "  étapes      : check network vms k3s minio app velero"
+	@echo "Cache images  : make images  (garde sur l'hôte les images de cluster-a ; IMAGE_CACHE=no pour s'en passer)"
+	@echo "Données       : make prefill [ROWS=1000000]  (vide puis remplit events sur cluster-a, pour les mesures)"
 	@echo "État          : make status"
 	@echo "Test de fumée : make backup | make smoke"
 	@echo "Planification : make schedule  (sauvegarde de cluster-a toutes les 15 min, conservée 72 h)"
@@ -45,6 +47,12 @@ app:
 velero:
 	@$(K)/velero/install-velero.sh cluster-a rw
 	@$(K)/velero/install-velero.sh cluster-b ro
+
+prefill:
+	@./scripts/prefill.sh $(ROWS)
+
+images:
+	@$(I)/cache-images.sh
 
 up: check
 	@start=$$(date +%s); \

@@ -26,6 +26,9 @@ Détails : [docs/architecture.md](docs/architecture.md)
 - `docs/plan.md` : plan de travail, rôles, calendrier
 - `docs/risques.md` : registre des risques
 - `docs/journal/` : journal de séance (AAAA-MM-JJ.md)
+- `docs/mesures/` : protocole de mesure du J4 et calibration
+- `docs/rapport/` : rapport (jalons J1 à J3)
+- `docs/preuves/` : preuves et checklists des jalons
 - `infra/` : préparation de l'hôte, création des VM (libvirt, cloud-init) et installation de k3s
 - `k8s/` : manifestes Kubernetes (application, Velero)
 - `scripts/` : sinistre, restauration, mesures RTO/RPO
@@ -130,6 +133,14 @@ make up                              # reconstruit cluster-a après la démonstr
 - Le contrôle de cohérence est défini dans `docs/architecture.md` (section 6) ; si le contrôle échoue, t1 n'est pas posé et
   l'essai est noté `incoherent` dans `results/runs.csv`.
 - Preuves : `docs/preuves/J3/`.
+
+## Cache des images et données de mesure
+```bash
+make images                          # garde sur l'hôte les images de cluster-a (ADR 0005), à refaire après
+                                     # un changement de version ; les make up suivants ne les téléchargent plus
+IMAGE_CACHE=no make up               # reconstruction sans le cache (plus rapide sur un bon réseau pour A et B)
+make prefill ROWS=1000000            # vide puis remplit events sur cluster-a (docs/mesures/protocole.md)
+```
 
 ## Preuves
 `docs/preuves/<jalon>/` : sorties de commandes et durées de chaque jalon.

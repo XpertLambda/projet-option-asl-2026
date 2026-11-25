@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Fonctions communes des scripts du projet. À charger avec : source "$(dirname "$0")/lib.sh"
 # Aucun secret ici : les secrets générés vivent dans $CONF_DIR, hors du dépôt.
+# Les variables définies ici sont lues par les scripts qui chargent ce fichier :
+# shellcheck disable=SC2034
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONF_DIR="${PROJET_CONF_DIR:-$HOME/.config/projet}"     # secrets générés (hors Git)
@@ -17,6 +19,9 @@ BASE_IMAGE="noble.img"
 WAIT_TIMEOUT="${WAIT_TIMEOUT:-900s}"
 [[ "$WAIT_TIMEOUT" =~ ^[0-9]+s$ ]] || { echo "ERREUR : WAIT_TIMEOUT doit être un nombre de secondes suivi de s (ex. 900s), reçu '$WAIT_TIMEOUT'" >&2; exit 1; }
 WAIT_SECONDS="${WAIT_TIMEOUT%s}"
+# Cache local des images (infra/cache-images.sh) ; IMAGE_CACHE=no pour reconstruire sans lui
+IMAGE_CACHE="${IMAGE_CACHE:-yes}"
+IMAGE_CACHE_FILE="$CACHE_DIR/images/k3s-images.tar"
 SSH_KEY="$CONF_DIR/ssh/id_ed25519"
 SSH_OPTS=(-i "$SSH_KEY" -o IdentitiesOnly=yes -o StrictHostKeyChecking=no
           -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=5)
