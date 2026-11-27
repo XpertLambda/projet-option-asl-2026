@@ -2,7 +2,8 @@
 
 Projet d'option ASL-IA 2026-2027, Sujet 8 : Sauvegarde et reprise après sinistre
 Groupe : Ahmad SAAD, Amer EL JIBBAWE, Ali TERRO
-Version : J1 (cadrage), 06/11/2026
+Version : J1 (cadrage), 06/11/2026, précisée depuis en section 6 (18/11 et 25/11 : contrôle de cohérence, définitions
+de t0 et t1, sauvegarde restaurée, première écriture)
 
 ## 1. Objectif
 

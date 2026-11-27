@@ -32,6 +32,8 @@ Détails : [docs/architecture.md](docs/architecture.md)
 - `infra/` : préparation de l'hôte, création des VM (libvirt, cloud-init) et installation de k3s
 - `k8s/` : manifestes Kubernetes (application, Velero)
 - `scripts/` : sinistre, restauration, mesures RTO/RPO
+- `results/runs.csv` : un essai de sinistre et reprise par ligne
+- `Makefile`, `versions.yaml` : cibles et versions figées
 
 ## Jalons
 | Jalon | Échéance | Tag Git |
@@ -126,8 +128,15 @@ make demo CONFIRM_DISASTER=yes       # tout le scénario, avec sortie commentée
 make up                              # reconstruit cluster-a après la démonstration
 ```
 - Avant la démonstration, `cluster-a` ne doit pas avoir connu d'interruption (redémarrage de l'hôte, VM arrêtées) :
-  le contrôle porte sur toute la table `events` et jugerait la restauration incohérente. Dans ce cas,
-  `make destroy && make up` d'abord (la VM `backup` et les sauvegardes restent).
+  le contrôle porte sur toute la table `events` et jugerait la restauration incohérente. `make demo` le vérifie
+  et s'arrête alors sans rien détruire ; reconstruire A (`./infra/destroy-vm.sh cluster-a && make up`, la VM
+  `backup` et les sauvegardes restent). `make disaster` seul ne fait pas ce contrôle.
+- Un sinistre n'est enregistré qu'une fois : relancer `make restore` ensuite restaure l'application sans ajouter
+  de ligne à `results/runs.csv`.
+- Colonnes de `results/runs.csv` : `run`, `date`, `strategy`, `backup`, `t0` et `t1` (secondes depuis l'epoch),
+  `rto_s`, `last_ts_a` (dernière écriture lue sur A), `max_ts_restored`, `rpo_s`, `rows_restored`,
+  `backup_duration_s`, `backup_size_bytes`, `status` (`ok` ou `incoherent`), `rto_ecriture_s` (première nouvelle
+  écriture sur B, après t0 ; vide pour les essais antérieurs au 25/11 après-midi).
 - `make demo` attend jusqu'à 15 minutes la première sauvegarde planifiée de l'instance actuelle de `cluster-a`
   (le bucket garde les sauvegardes des instances précédentes, `restore.sh` les refuse).
 - Le contrôle de cohérence est défini dans `docs/architecture.md` (section 6) ; si le contrôle échoue, t1 n'est pas posé et
