@@ -11,8 +11,14 @@ D="$(dirname "$0")"
 KB="$(kubeconfig cluster-b)"; KA="$(kubeconfig cluster-a)"
 start=$SECONDS
 
-log "1/4 État avant le sinistre : cluster-a (contrôle à titre d'information)"
-"$D/verify.sh" cluster-a || info "cluster-a présente déjà des écarts historiques (voir la sortie ci-dessus)"
+# Le contrôle porte sur toute la table : si cluster-a échoue déjà (redémarrage de l'hôte, VM arrêtées), la
+# restauration serait jugée incohérente. Dans ce cas, rien n'est détruit.
+check_a() {
+  "$D/verify.sh" cluster-a \
+    || die "cluster-a échoue au contrôle de cohérence, rien n'est détruit : le reconstruire (./infra/destroy-vm.sh cluster-a && make up), puis relancer la démonstration"
+}
+log "1/4 État avant le sinistre : cluster-a (le contrôle doit réussir)"
+check_a
 
 log "2/4 Une sauvegarde planifiée de CETTE instance de cluster-a est-elle visible depuis cluster-b ?"
 # Le bucket garde les sauvegardes des instances précédentes de cluster-a : seules celles terminées après la
@@ -29,6 +35,7 @@ wait_for "aucune sauvegarde planifiée de cette instance de cluster-a visible de
 kubectl --kubeconfig "$KB" -n velero get backup -l velero.io/schedule-name=app-15min --sort-by=.metadata.creationTimestamp | tail -3 | sed 's/^/   /'
 
 log "3/4 Sinistre : destruction de cluster-a"
+check_a   # de nouveau : l'attente peut durer 15 minutes
 "$D/disaster.sh"
 
 log "4/4 Reprise sur cluster-b"

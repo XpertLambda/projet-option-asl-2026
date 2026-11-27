@@ -29,7 +29,13 @@ done
 K=(kubectl --kubeconfig "$(kubeconfig "$CL")")
 log "Contrôle de cohérence sur $CL"
 "${K[@]}" -n app get pods --no-headers | sed 's/^/   /'
-"${K[@]}" -n app wait --for=condition=Ready pod --all --timeout=10s >/dev/null || die "pods de l'application non Ready"
+# Attentes sur un état, plafond commun. L'écrivain n'est attendu que s'il doit tourner : pendant une reprise il
+# est à 0 réplique et un ancien pod peut encore être en cours d'arrêt.
+"${K[@]}" -n app wait --for=condition=Ready pod/postgres-0 --timeout="$WAIT_TIMEOUT" >/dev/null || die "postgres-0 non Ready"
+replicas="$("${K[@]}" -n app get deployment writer -o jsonpath='{.spec.replicas}')" || die "écrivain absent sur $CL"
+if (( replicas > 0 )); then
+  "${K[@]}" -n app rollout status deployment/writer --timeout="$WAIT_TIMEOUT" >/dev/null || die "écrivain non prêt"
+fi
 
 SQL="SELECT count(*), coalesce(max(id), 0),
   coalesce(to_char(max(ts) AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"'), ''),

@@ -8,13 +8,15 @@
 # RTO = t1 - t0 ; RPO = (max(ts) lu sur cluster-a avant t0) - max(ts) restauré.
 # En plus (sans changer t1) : rto_ecriture = instant où la première nouvelle ligne est lue sur cluster-b - t0.
 # t0 et la dernière écriture viennent de scripts/disaster.sh (~/.cache/projet/last-disaster.env).
-# Les essais réels (sinistre non à blanc) sont ajoutés à results/runs.csv.
+# Les essais réels (sinistre non à blanc) sont ajoutés à results/runs.csv, une seule fois par sinistre : une
+# restauration relancée ensuite remet l'application en service sans nouvel enregistrement (son RTO serait faux).
 # Usage : ./scripts/restore.sh [nom_de_sauvegarde]
 set -euo pipefail
 source "$(dirname "$0")/../infra/lib.sh"
 
 STATE="$CACHE_DIR/last-disaster.env"
 [[ -f "$STATE" ]] || die "aucun sinistre enregistré : lancer d'abord make disaster"
+RECORDED=""   # numéro de l'essai si ce sinistre est déjà dans results/runs.csv (écrit dans le fichier d'état)
 # shellcheck source=/dev/null
 source "$STATE"
 KB="$(kubeconfig cluster-b)"; [[ -f "$KB" ]] || die "kubeconfig absent : $KB"
@@ -116,14 +118,17 @@ B_DUR=""; [[ -n "$b_start" && -n "$b_end" ]] && B_DUR="$(( $(date -d "$b_end" +%
 B_SIZE="$("${K[@]}" -n velero get podvolumebackup -l "velero.io/backup-name=$BACKUP" -o jsonpath='{.items[*].status.progress.totalBytes}' 2>/dev/null | awk '{s=0; for(i=1;i<=NF;i++) s+=$i; if (NF) print s}')"
 
 # Enregistrement (essais réels seulement)
-if [[ "$DESTROYED" == yes ]]; then
+if [[ "$DESTROYED" != yes ]]; then
+  info "essai à blanc (cluster-a non détruit) : non enregistré dans results/runs.csv"
+elif [[ -n "$RECORDED" ]]; then
+  info "ce sinistre est déjà enregistré (essai $RECORDED de results/runs.csv) : rien n'est ajouté, le RTO affiché ne compte pas"
+else
   mkdir -p "$(dirname "$CSV")"
   [[ -f "$CSV" ]] || echo "run,date,strategy,backup,t0,t1,rto_s,last_ts_a,max_ts_restored,rpo_s,rows_restored,backup_duration_s,backup_size_bytes,status,rto_ecriture_s" > "$CSV"
   RUN=$(( $(wc -l < "$CSV") ))
   echo "$RUN,$(date +%F),S1,$BACKUP,$T0_EPOCH,$T1_EPOCH,$RTO,$LAST_TS,$MAX_TS_B,$RPO,$ROWS_B,$B_DUR,$B_SIZE,$STATUS,$RTO_W" >> "$CSV"
+  echo "RECORDED=$RUN" >> "$STATE"
   info "essai $RUN ajouté à results/runs.csv (statut : $STATUS)"
-else
-  info "essai à blanc (cluster-a non détruit) : non enregistré dans results/runs.csv"
 fi
 echo "RESTORE backup=$BACKUP t0=$T0_EPOCH t1=${T1_EPOCH:-non_pose} rto_s=${RTO:-} rpo_s=${RPO:-} rows_restored=${ROWS_B:-} status=$STATUS rto_ecriture_s=${RTO_W:-}"
 [[ "$STATUS" == ok ]]
