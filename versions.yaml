@@ -1,7 +1,8 @@
 # Versions figées de toute la plateforme (une clé par ligne : "cle: valeur").
 # Les scripts lisent ce fichier via infra/lib.sh (fonction ver). Ne rien figer ailleurs.
 
-# Image de base des VM (Ubuntu 24.04 cloud image, empreinte de noble-server-cloudimg-amd64.img)
+# Image de base des VM (Ubuntu 24.04 cloud image : publication datée et empreinte de noble-server-cloudimg-amd64.img)
+ubuntu_image_build: 20261017
 ubuntu_image_sha256: 04e8f2461a16a44e78a370284471f29616cdd9baf1893df25807b71f985b6c94
 
 # Kubernetes (k3s) : ligne 1.35, la plus récente testée par Velero 1.18

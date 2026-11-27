@@ -9,7 +9,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Version de Velero : lue dans versions.yaml (surchargeable avec VELERO_VERSION=...)
 VELERO_VERSION="${VELERO_VERSION:-$(awk -F': *' '$1=="velero_version" {print $2; exit}' "$SCRIPT_DIR/../versions.yaml")}"
 IMAGES_DIR="/var/lib/libvirt/images"
-UBUNTU_IMG_URL="https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
+# Image cloud datée (pas « current », qui change à chaque publication) et son empreinte : versions.yaml
+UBUNTU_BUILD="$(awk -F': *' '$1=="ubuntu_image_build" {print $2; exit}' "$SCRIPT_DIR/../versions.yaml")"
+UBUNTU_SHA="$(awk -F': *' '$1=="ubuntu_image_sha256" {print $2; exit}' "$SCRIPT_DIR/../versions.yaml")"
+UBUNTU_IMG_URL="https://cloud-images.ubuntu.com/noble/${UBUNTU_BUILD}/noble-server-cloudimg-amd64.img"
 
 if [[ $EUID -ne 0 ]]; then echo "Lancer avec sudo." >&2; exit 1; fi
 ACCOUNT="${1:-${SUDO_USER:-}}"
@@ -60,7 +63,10 @@ fi
 echo "== 9. Image cloud Ubuntu 24.04 pour les VM"
 mkdir -p "$IMAGES_DIR/base"
 if [[ ! -f "$IMAGES_DIR/base/noble.img" ]]; then
-  wget -O "$IMAGES_DIR/base/noble.img" "$UBUNTU_IMG_URL"
+  wget -O "$IMAGES_DIR/base/noble.img.part" "$UBUNTU_IMG_URL"
+  echo "$UBUNTU_SHA  $IMAGES_DIR/base/noble.img.part" | sha256sum -c - \
+    || { echo "Empreinte de l'image différente de versions.yaml : image non installée." >&2; exit 1; }
+  mv "$IMAGES_DIR/base/noble.img.part" "$IMAGES_DIR/base/noble.img"
 fi
 
 echo "== Terminé. Déconnectez-vous puis reconnectez-vous pour appliquer les groupes."

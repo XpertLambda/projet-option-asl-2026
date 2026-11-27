@@ -8,7 +8,7 @@ source "$(dirname "$0")/lib.sh"
 log "Pools de stockage libvirt"
 base_dir=/var/lib/libvirt/images/base
 vms_dir=/var/lib/libvirt/images/dr
-[[ -f "$base_dir/$BASE_IMAGE" ]] || die "image de base absente : $base_dir/$BASE_IMAGE (voir SETUP-MACHINE : infra/setup-host.sh)"
+[[ -f "$base_dir/$BASE_IMAGE" ]] || die "image de base absente : $base_dir/$BASE_IMAGE (lancer sudo ./infra/setup-host.sh)"
 sum="$(sha256sum "$base_dir/$BASE_IMAGE" | cut -d' ' -f1)"
 [[ "$sum" == "$(ver ubuntu_image_sha256)" ]] || die "empreinte de $BASE_IMAGE différente de versions.yaml ($sum)"
 
