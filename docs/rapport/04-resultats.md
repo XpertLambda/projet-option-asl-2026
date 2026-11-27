@@ -1,5 +1,7 @@
 # 4. Résultats au J3
 
+Au 27/11, le J3 est **en cours de test** : le scénario fonctionne, le groupe ne l'a pas encore validé.
+
 ## Ce qui fonctionne
 | Capacité | Preuve (`../preuves/`) |
 |----------|------------------------|

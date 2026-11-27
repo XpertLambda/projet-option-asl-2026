@@ -17,7 +17,7 @@ reviennent sur un second cluster, et à chiffrer ce que cela coûte :
 |-------|----------|---------|---------------|
 | J1 Cadrage | 06/11/2026 | Architecture, ADR, risques, plan | Validé en retard (tag `J1` du 15/11) |
 | J2 Socle | 20/11/2026 | Plateforme reconstructible par script | Validé (tag `J2` du 18/11) |
-| J3 MVP | 15/12/2026 | Sauvegarde, sinistre, restauration, preuves | Validé en avance (tag `J3` du 25/11) |
+| J3 MVP | 15/12/2026 | Sauvegarde, sinistre, restauration, preuves | En cours de test (non validé ; tag `J3` du 25/11 retiré le 27/11) |
 | J4 Mesures | 22/01/2027 | RTO et RPO de plusieurs stratégies, plan de reprise | Non commencé |
 
 ## Contraintes

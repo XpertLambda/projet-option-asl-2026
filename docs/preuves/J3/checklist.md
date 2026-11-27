@@ -1,7 +1,10 @@
 # Checklist J3 : MVP (sauvegarde planifiée, sinistre, restauration)
 
-Établie le 23/11/2026, mise à jour les 25 et 27/11/2026. Échéance du jalon : mardi 15/12/2026 18:00. Tag `J3` posé le 25/11/2026 sur `6381e2a` ;
-les compléments postérieurs au tag (25 et 27/11) sont signalés « après le tag ».
+Établie le 23/11/2026, mise à jour les 25 et 27/11/2026. Échéance du jalon : mardi 15/12/2026 18:00.
+
+**Statut au 27/11/2026 : J3 en cours de test, non validé.** Un tag `J3` posé le 25/11 sur `6381e2a` a été retiré le 27/11
+à la demande du groupe ; il sera posé de nouveau quand le groupe validera le jalon. « Fait » ci-dessous veut dire
+réalisé et essayé, pas validé.
 
 Critère du jalon : sauvegarde planifiée, destruction totale de `cluster-a`, restauration complète sur `cluster-b`, données
 vérifiées, avec preuves.
@@ -17,15 +20,15 @@ vérifiées, avec preuves.
 | `scripts/restore.sh` : dernière sauvegarde planifiée de l'instance détruite, restauration sur B, contrôle, t1, RTO et RPO | Fait | `demo-sinistre.txt` |
 | Contrôle échoué : t1 non posé, écrivain laissé à 0, essai noté « incoherent » | Fait, exercé deux fois : essai à blanc, puis essai réel invalide | `demo-essai-invalide-1.txt` |
 | Garde-fous : sinistre et démonstration refusés sans confirmation, VM `backup` protégée, sauvegarde d'une instance précédente de A refusée | Fait (25/11) | `garde-fous.txt` |
-| Après le tag : la démonstration s'arrête sans rien détruire si cluster-a échoue déjà au contrôle ; un sinistre n'est enregistré qu'une fois dans `results/runs.csv` | Fait (27/11), testé en réel | `garde-fous-27-11.txt` |
-| `results/runs.csv` | Fait : 4 essais valides (les deux derniers après le tag) | `results/runs.csv` |
+| Ajout du 27/11 : la démonstration s'arrête sans rien détruire si cluster-a échoue déjà au contrôle ; un sinistre n'est enregistré qu'une fois dans `results/runs.csv` | Fait (27/11), testé en réel | `garde-fous-27-11.txt` |
+| `results/runs.csv` | Fait : 4 essais valides | `results/runs.csv` |
 | `make backup`, `make schedule`, `make disaster`, `make restore`, `make demo` | Fait | `make help`, `demo-sinistre.txt` |
 | Données restaurées vérifiées : pas de corruption, lignes continues jusqu'au point de restauration | Fait : 374, 731, 69 puis 731 lignes, `ts` continu ; l'écart d'ids est documenté | `demo-sinistre.txt`, `demo-sinistre-2.txt`, `demo-sinistre-3.txt`, `demo-sinistre-4.txt`, `ecart-id-lignes-avec-hook.md` |
 | Reconstruction depuis zéro avant la démonstration, puis de `cluster-a` après | Fait (25/11) : `make destroy` 1 s, `make up` 228 s, `make smoke` 59 s | `reconstruction-demo-2.txt`, `apres-demo-2.txt` |
-| Après le tag : reconstruction depuis un clone neuf du dépôt ; sur réseau lent simulé ; de `cluster-a` après un redémarrage de l'hôte | Fait : 223 s (25/11), 840 s (25/11), 141 s (27/11) | `reconstruction-clone-neuf.txt`, `../J2/reconstruction-reseau-lent-25-11.txt`, `reconstruction-27-11.txt` |
+| Ajouts : reconstruction depuis un clone neuf du dépôt ; sur réseau lent simulé ; de `cluster-a` après un redémarrage de l'hôte | Fait : 223 s (25/11), 840 s (25/11), 141 s (27/11) | `reconstruction-clone-neuf.txt`, `../J2/reconstruction-reseau-lent-25-11.txt`, `reconstruction-27-11.txt` |
 
 ## Résultats des démonstrations
-| Mesure | 23/11 | 25/11 (au tag) | 25/11 (après le tag) | 27/11 (après le tag) |
+| Mesure | 23/11 | 25/11, matin | 25/11, midi | 27/11 |
 |--------|-------|----------------|----------------------|----------------------|
 | Sauvegarde restaurée | `app-15min-20261123091533` | `app-15min-20261125093021` | `app-15min-20261125103041` | `app-15min-20261127100007` |
 | Durée de la sauvegarde, volume copié par Kopia | 6 s, 48 Mo | 6 s, 48 Mo | 6 s, 48 Mo | 7 s, 48 Mo |
@@ -55,7 +58,7 @@ dispersion). Le RPO dépend de l'âge de la dernière sauvegarde planifiée : de
 - **Le RTO ne compte pas la reprise des écritures.** t1 est posé quand la base répond et que le contrôle a réussi ;
   l'écrivain est ensuite remis à 1. La première ligne sur B est arrivée environ 10 s après t1 au premier essai du
   25/11, 1,5 s après au second et 11 s après le 27/11 (cause de l'écart non recherchée). Décision : t1 inchangé, et la première écriture
-  est relevée en plus par `restore.sh` (après le tag).
+  est relevée en plus par `restore.sh` (depuis le 25/11 à midi).
 - **Hook** : seul `CHECKPOINT` est utilisé (ADR 0004). `pg_backup_start` et `pg_backup_stop` supposent la même connexion
   pour le début et la fin ; les deux hooks de Velero s'exécutent dans deux commandes distinctes. Non testé.
 - **Durée de la démonstration** : jusqu'à 15 minutes d'attente de la première sauvegarde planifiée de la nouvelle instance de
@@ -65,5 +68,5 @@ dispersion). Le RPO dépend de l'âge de la dernière sauvegarde planifiée : de
   `make disaster` seul ne fait pas ce contrôle.
 - **Après la démonstration**, `cluster-a` est détruit ; `make up` le reconstruit. `cluster-b` conserve l'application restaurée
   jusqu'à la prochaine restauration (le script supprime alors l'ancien namespace `app`).
-- Tests faits sur un réseau rapide. Après le tag : cache local des images (ADR 0005), `make destroy-all` testé
+- Tests faits sur un réseau rapide. Ajoutés depuis le 25/11 à midi : cache local des images (ADR 0005), `make destroy-all` testé
   (`../J2/destroy-all-25-11.txt`), protocole du J4 écrit (`../../mesures/protocole.md`).
